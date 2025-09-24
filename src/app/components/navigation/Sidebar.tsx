@@ -3,18 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-interface SidebarItem {
-  name: string;
-  href: string;
-  icon: string;
-  children?: SidebarItem[];
-}
-
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { SidebarProps, SidebarItem } from '../types/navigation'
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();

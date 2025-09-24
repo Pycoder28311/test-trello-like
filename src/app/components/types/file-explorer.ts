@@ -1,3 +1,5 @@
+import { Column } from './tabs';
+
 // types/file-explorer.ts
 export interface FileItem {
   id: string;
@@ -8,17 +10,6 @@ export interface FileItem {
   content?: string;
 }
 
-interface Card {
-  id: string;
-  content: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  cards: Card[];
-}
-
 export interface FileExplorerProps {
   data: FileItem[];
   onUpdate: (data: FileItem[]) => void;
@@ -26,3 +17,18 @@ export interface FileExplorerProps {
   columns: Column[];
 }
 
+export interface CreateDropdownProps {
+  onAddItem: (type: 'file' | 'folder', parentId: string | null) => void;
+  parentId?: string | null;
+}
+
+export interface FileExplorerNodeProps {
+  item: FileItem;
+  level: number;
+  expandedFolders: Set<string>;
+  onToggleFolder: (folderId: string) => void;
+  onDeleteItem: (id: string) => void;
+  onRenameItem: (id: string, newName: string) => void;
+  onFileSelect?: (file: FileItem) => void;
+  onAddItem: (type: 'file' | 'folder', parentId: string | null) => void;
+}

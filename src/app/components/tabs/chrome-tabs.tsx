@@ -3,14 +3,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Plus, X, MoreHorizontal } from 'lucide-react';
-
-interface Tab {
-  id: string;
-  title: string;
-  isActive: boolean;
-  favicon?: string;
-  isNew: boolean; // Flag for new tabs that need naming
-}
+import { Tab } from '../types/tabs';
 
 const ChromeTabs = () => {
   const [tabs, setTabs] = useState<Tab[]>([
@@ -198,32 +191,17 @@ const ChromeTabs = () => {
 
             {/* Tab Title - Input field for new tabs, text for existing */}
             <div className="flex-1 min-w-0 mx-1">
-              {tab.isNew ? (
-                <input
-                  ref={(el) => {
-                    inputRefs.current[tab.id] = el;
-                  }}
-                  type="text"
-                  className="w-full bg-transparent outline-none text-sm px-1"
-                  placeholder="Enter tab name..."
-                  value={tab.title}
-                  onChange={(e) => handleNameChange(tab.id, e.target.value)}
-                  onKeyDown={(e) => handleNewTabKeyDown(tab.id, e)}
-                  autoFocus
-                />
-              ) : (
-                <input
-                  ref={(el) => {
-                    inputRefs.current[tab.id] = el;
-                  }}
-                  type="text"
-                  className="w-full bg-transparent outline-none text-sm px-1"
-                  value={tab.title}
-                  onChange={(e) => handleNameChange(tab.id, e.target.value)}
-                  onKeyDown={(e) => handleInputKeyDown(tab.id, e)}
-                  onFocus={(e) => e.target.select()} // 👈 only for rename
-                />
-              )}
+              <input
+                ref={(el) => {
+                  inputRefs.current[tab.id] = el;
+                }}
+                type="text"
+                className="w-full bg-transparent outline-none text-sm px-1"
+                value={tab.title}
+                onChange={(e) => handleNameChange(tab.id, e.target.value)}
+                onKeyDown={(e) => handleInputKeyDown(tab.id, e)}
+                onFocus={(e) => e.target.select()} // 👈 only for rename
+              />
             </div>
 
             {/* Close Button - Show for all tabs except when naming new tabs */}

@@ -2,11 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-
-interface CreateDropdownProps {
-  onAddItem: (type: 'file' | 'folder', parentId: string | null) => void;
-  parentId?: string | null;
-}
+import { CreateDropdownProps } from '../types/file-explorer';
 
 const CreateDropdown: React.FC<CreateDropdownProps> = ({ 
   onAddItem, 

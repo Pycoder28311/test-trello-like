@@ -7,6 +7,7 @@ import { FileItem } from './components/types/file-explorer';
 import TrelloBoards from './components/trello-boards';
 import { DropResult } from "@hello-pangea/dnd";
 import ChromeTabs from './components/tabs/chrome-tabs';
+import { Card, Column } from './components/types/tabs'
 
 const initialColumns = [
   {
@@ -31,17 +32,6 @@ const initialColumns = [
     cards: [],
   },
 ];
-
-interface Card {
-  id: string;
-  content: string;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  cards: Card[];
-}
 
 const simpleData: FileItem[] = [
   {

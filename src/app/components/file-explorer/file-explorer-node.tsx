@@ -2,19 +2,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileItem } from '../types/file-explorer';
 import CreateDropdown from './create-dropdown';
-
-interface FileExplorerNodeProps {
-  item: FileItem;
-  level: number;
-  expandedFolders: Set<string>;
-  onToggleFolder: (folderId: string) => void;
-  onDeleteItem: (id: string) => void;
-  onRenameItem: (id: string, newName: string) => void;
-  onFileSelect?: (file: FileItem) => void;
-  onAddItem: (type: 'file' | 'folder', parentId: string | null) => void;
-}
+import { FileExplorerNodeProps } from '../types/file-explorer';
 
 const FileExplorerNode: React.FC<FileExplorerNodeProps> = ({
   item,
