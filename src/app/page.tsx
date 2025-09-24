@@ -6,6 +6,7 @@ import FileExplorerSidebar from './components/file-explorer/file-explorer-sideba
 import { FileItem } from './components/types/file-explorer';
 import TrelloBoards from './components/trello-boards';
 import { DropResult } from "@hello-pangea/dnd";
+import ChromeTabs from './components/tabs/chrome-tabs';
 
 const initialColumns = [
   {
@@ -77,10 +78,8 @@ const simpleData: FileItem[] = [
 
 export default function SimplePage() {
   const [fileData, setFileData] = useState<FileItem[]>(simpleData);
-  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
 
   const handleFileSelect = (file: FileItem) => {
-    setSelectedFile(file);
     console.log('Selected file:', file);
   };
 
@@ -185,30 +184,31 @@ export default function SimplePage() {
   };
 
   return (
-    <div className="flex h-full bg-gray-100">
-      <FileExplorerSidebar
-        data={fileData}
-        onUpdate={setFileData}
-        onFileSelect={handleFileSelect}
-        columns={columns}
-      />
+    <div>
+      <ChromeTabs />
+      <div className="flex h-full bg-gray-100 overflow-x-hidden">
+        <FileExplorerSidebar
+          data={fileData}
+          onUpdate={setFileData}
+          onFileSelect={handleFileSelect}
+          columns={columns}
+        />
 
-      <TrelloBoards
-        columns={columns}
-        setColumns={setColumns}
-        newCardTexts={newCardTexts}
-        setNewCardTexts={setNewCardTexts}
-        newColumnTitle={newColumnTitle}
-        setNewColumnTitle={setNewColumnTitle}
-        isAddingColumn={isAddingColumn}
-        setIsAddingColumn={setIsAddingColumn}
-        handleDragEnd={handleDragEnd}
-        handleInputChange={handleInputChange}
-        addCard={addCard}
-        deleteCard={deleteCard}
-        addColumn={addColumn}
-        deleteColumn={deleteColumn}
-      />
+        <TrelloBoards
+          columns={columns}
+          newCardTexts={newCardTexts}
+          newColumnTitle={newColumnTitle}
+          setNewColumnTitle={setNewColumnTitle}
+          isAddingColumn={isAddingColumn}
+          setIsAddingColumn={setIsAddingColumn}
+          handleDragEnd={handleDragEnd}
+          handleInputChange={handleInputChange}
+          addCard={addCard}
+          deleteCard={deleteCard}
+          addColumn={addColumn}
+          deleteColumn={deleteColumn}
+        />
+      </div>
     </div>
   );
 }

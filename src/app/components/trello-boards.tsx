@@ -15,9 +15,7 @@ interface Column {
 
 interface TrelloBoardsProps {
   columns: Column[];
-  setColumns: React.Dispatch<React.SetStateAction<Column[]>>;
   newCardTexts: Record<string, string>; // columnId -> input value
-  setNewCardTexts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   newColumnTitle: string;
   setNewColumnTitle: React.Dispatch<React.SetStateAction<string>>;
   isAddingColumn: boolean;
@@ -33,9 +31,7 @@ interface TrelloBoardsProps {
 // Correctly typed component
 const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   columns,
-  setColumns,
   newCardTexts,
-  setNewCardTexts,
   newColumnTitle,
   setNewColumnTitle,
   isAddingColumn,
@@ -49,7 +45,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
 }) => {
 
   return (
-    <div className="p-8">
+    <div className="p-8 overflow-x-auto">
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
           {(provided) => (
