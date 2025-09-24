@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileItem } from './types/file-explorer';
+import { FileItem } from '../types/file-explorer';
 import CreateDropdown from './create-dropdown';
 
 interface FileExplorerNodeProps {
@@ -32,7 +32,6 @@ const FileExplorerNode: React.FC<FileExplorerNodeProps> = ({
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
 
   const isExpanded = expandedFolders.has(item.id);
-  const hasChildren = item.type === 'folder' && item.children && item.children.length > 0;
 
   const handleToggle = () => {
     if (item.type === 'folder') {
@@ -68,8 +67,8 @@ const FileExplorerNode: React.FC<FileExplorerNodeProps> = ({
     if (item.type === 'folder') {
       return isExpanded ? '📂' : '📁';
     }
-    
-    const ext = item.name.split('.').pop()?.toLowerCase();
+
+    const ext = item.name.split('.').pop()?.toLowerCase() ?? ''; // default to empty string
     const iconMap: { [key: string]: string } = {
       js: '📄',
       ts: '📄',
@@ -81,7 +80,8 @@ const FileExplorerNode: React.FC<FileExplorerNodeProps> = ({
       md: '📝',
       txt: '📝',
     };
-    return iconMap[ext] || '📄';
+
+    return iconMap[ext] || '📄'; // safe because ext is now string
   };
 
   return (

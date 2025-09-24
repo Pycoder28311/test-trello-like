@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface Card {
@@ -14,130 +13,40 @@ interface Column {
   cards: Card[];
 }
 
-const initialColumns: Column[] = [
-  {
-    id: "col-1",
-    title: "To Do",
-    cards: [
-      { id: "1", content: "Task 1" },
-      { id: "2", content: "Task 2" },
-    ],
-  },
-  {
-    id: "col-2",
-    title: "In Progress",
-    cards: [
-      { id: "3", content: "Task 3" },
-      { id: "4", content: "Task 4" },
-    ],
-  },
-  {
-    id: "col-3",
-    title: "Done",
-    cards: [],
-  },
-];
+interface TrelloBoardsProps {
+  columns: Column[];
+  setColumns: React.Dispatch<React.SetStateAction<Column[]>>;
+  newCardTexts: Record<string, string>; // columnId -> input value
+  setNewCardTexts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  newColumnTitle: string;
+  setNewColumnTitle: React.Dispatch<React.SetStateAction<string>>;
+  isAddingColumn: boolean;
+  setIsAddingColumn: React.Dispatch<React.SetStateAction<boolean>>;
+  handleDragEnd: (result: DropResult) => void;
+  handleInputChange: (columnId: string, value: string) => void;
+  addCard: (columnId: string) => void;
+  deleteCard: (columnId: string, cardId: string) => void;
+  addColumn: () => void;
+  deleteColumn: (columnId: string) => void;
+}
 
-export default function TrelloBoards() {
-  const [columns, setColumns] = useState<Column[]>(initialColumns);
-  const [newCardTexts, setNewCardTexts] = useState<{ [key: string]: string }>({});
-  const [newColumnTitle, setNewColumnTitle] = useState("");
-  const [isAddingColumn, setIsAddingColumn] = useState(false);
-
-  const handleDragEnd = (result: DropResult) => {
-    const { source, destination, type } = result;
-    
-    if (!destination) return;
-
-    // Handle column drag and drop
-    if (type === "COLUMN") {
-      const newColumns = Array.from(columns);
-      const [movedColumn] = newColumns.splice(source.index, 1);
-      newColumns.splice(destination.index, 0, movedColumn);
-      setColumns(newColumns);
-      return;
-    }
-
-    // Handle card drag and drop (existing logic)
-    if (source.droppableId === destination.droppableId) {
-      const colIndex = columns.findIndex((col) => col.id === source.droppableId);
-      const col = columns[colIndex];
-      const updatedCards = Array.from(col.cards);
-      const [movedCard] = updatedCards.splice(source.index, 1);
-      updatedCards.splice(destination.index, 0, movedCard);
-
-      const newColumns = Array.from(columns);
-      newColumns[colIndex] = { ...col, cards: updatedCards };
-      setColumns(newColumns);
-    } else {
-      const sourceColIndex = columns.findIndex((col) => col.id === source.droppableId);
-      const destColIndex = columns.findIndex((col) => col.id === destination.droppableId);
-
-      const sourceCol = columns[sourceColIndex];
-      const destCol = columns[destColIndex];
-
-      const sourceCards = Array.from(sourceCol.cards);
-      const destCards = Array.from(destCol.cards);
-
-      const [movedCard] = sourceCards.splice(source.index, 1);
-      destCards.splice(destination.index, 0, movedCard);
-
-      const newColumns = Array.from(columns);
-      newColumns[sourceColIndex] = { ...sourceCol, cards: sourceCards };
-      newColumns[destColIndex] = { ...destCol, cards: destCards };
-
-      setColumns(newColumns);
-    }
-  };
-
-  const handleInputChange = (columnId: string, value: string) => {
-    setNewCardTexts({ ...newCardTexts, [columnId]: value });
-  };
-
-  const addCard = (columnId: string) => {
-    const text = newCardTexts[columnId]?.trim();
-    if (!text) return;
-
-    const newColumns = columns.map((col) => {
-      if (col.id === columnId) {
-        const newCard: Card = { id: Date.now().toString(), content: text };
-        return { ...col, cards: [...col.cards, newCard] };
-      }
-      return col;
-    });
-    setColumns(newColumns);
-    setNewCardTexts({ ...newCardTexts, [columnId]: "" });
-  };
-
-  const deleteCard = (columnId: string, cardId: string) => {
-    const newColumns = columns.map((col) => {
-      if (col.id === columnId) {
-        return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
-      }
-      return col;
-    });
-    setColumns(newColumns);
-  };
-
-  const addColumn = () => {
-    const title = newColumnTitle.trim();
-    if (!title) return;
-
-    const newColumn: Column = {
-      id: `col-${Date.now()}`,
-      title: title,
-      cards: [],
-    };
-
-    setColumns([...columns, newColumn]);
-    setNewColumnTitle("");
-    setIsAddingColumn(false);
-  };
-
-  const deleteColumn = (columnId: string) => {
-    const newColumns = columns.filter((col) => col.id !== columnId);
-    setColumns(newColumns);
-  };
+// Correctly typed component
+const TrelloBoards: React.FC<TrelloBoardsProps> = ({
+  columns,
+  setColumns,
+  newCardTexts,
+  setNewCardTexts,
+  newColumnTitle,
+  setNewColumnTitle,
+  isAddingColumn,
+  setIsAddingColumn,
+  handleDragEnd,
+  handleInputChange,
+  addCard,
+  deleteCard,
+  addColumn,
+  deleteColumn,
+}) => {
 
   return (
     <div className="p-8">
@@ -162,7 +71,7 @@ export default function TrelloBoards() {
                       }}
                     >
                       <div
-                        className="bg-gray-100 p-4 rounded-md w-80 min-h-[60px] flex flex-col"
+                        className="bg-gray-200 p-4 rounded-md w-80 min-h-[60px] flex flex-col"
                       >
                         {/* Column header with drag handle and delete button */}
                         <div className="flex justify-between items-center mb-4">
@@ -314,3 +223,5 @@ export default function TrelloBoards() {
     </div>
   );
 }
+
+export default TrelloBoards;

@@ -2,14 +2,15 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FileItem, FileExplorerProps } from './types/file-explorer';
-import FileExplorerNode from './file-explorer-node';
-import CreateDropdown from './create-dropdown';
+import { FileItem, FileExplorerProps } from '../types/file-explorer';
+import FileExplorerNode from '../file-explorer/file-explorer-node';
+import CreateDropdown from '../file-explorer/create-dropdown';
 
 const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
   data,
   onUpdate,
-  onFileSelect
+  onFileSelect,
+  columns,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
@@ -120,13 +121,15 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
 
   return (
     <div
-      className="h-full bg-gray-900 text-white flex flex-col border-r border-gray-700 relative"
+      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative"
       style={{ width }}
     >
+      {/* Resizer */}
       <div
         onMouseDown={handleMouseDown}
         className="absolute top-0 right-0 w-1 h-full cursor-ew-resize bg-transparent hover:bg-gray-600"
       />
+
       {/* Header */}
       <div className="p-4 border-b border-gray-700 flex justify-between items-center">
         <h2 className="font-semibold text-lg">Explorer</h2>
@@ -149,6 +152,25 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
           />
         ))}
       </div>
+
+      {/* Trello-like Board Below */}
+      <aside className="w-full p-4 overflow-y-auto">
+        {columns.map((column) => (
+          <div key={column.id} className="mb-4 bg-gray-800 p-2 rounded">
+            <h3 className="font-bold mb-2">{column.title}</h3>
+            <ul className="ml-2">
+              {column.cards.map((card) => (
+                <li key={card.id} className="mb-1 p-1 bg-gray-700 rounded shadow-sm">
+                  {card.content}
+                </li>
+              ))}
+              {column.cards.length === 0 && (
+                <li className="text-gray-400 italic">No tasks</li>
+              )}
+            </ul>
+          </div>
+        ))}
+      </aside>
     </div>
   );
 };
