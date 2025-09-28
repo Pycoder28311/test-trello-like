@@ -4,6 +4,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, X, MoreHorizontal } from 'lucide-react';
 import { Tab } from '../types/tabs';
+import Link from 'next/link';
 
 const ChromeTabs = () => {
   const [tabs, setTabs] = useState<Tab[]>([
@@ -244,9 +245,7 @@ const ChromeTabs = () => {
       </button>
 
       {/* Overflow Menu */}
-      <button className="w-8 h-8 flex items-center justify-center hover:bg-gray-300 mr-2 rounded flex-shrink-0">
-        <MoreHorizontal size={16} />
-      </button>
+      <Link href="/notes/app/">redmi notes</Link>
     </div>
   );
 };

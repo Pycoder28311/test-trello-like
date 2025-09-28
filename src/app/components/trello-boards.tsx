@@ -1,7 +1,9 @@
 "use client";
 
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import React, { useState } from "react";
+import { DragDropContext, Droppable, Draggable, DropResult, DragStart } from "@hello-pangea/dnd";
 import { TrelloBoardsProps } from './types/tabs';
+import ScrollContainer from "react-indiana-drag-scroll";
 
 // Correctly typed component
 const TrelloBoards: React.FC<TrelloBoardsProps> = ({
@@ -17,17 +19,34 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   deleteCard,
   addColumn,
   deleteColumn,
+  onCardClick,
 }) => {
+  const [isDraggingItem, setIsDraggingItem] = useState(false);
+
+  const handleDragStart = (start: DragStart) => {
+    if (start.type === "COLUMN" || start.type === "CARD") {
+      setIsDraggingItem(true); // disable scroll while dragging item
+    }
+  };
+
+  const handleDragEndWrapper = (result: DropResult) => {
+    setIsDraggingItem(false); // re-enable scroll after drag
+    handleDragEnd(result);
+  };
 
   return (
-    <div className="p-8 overflow-x-auto">
-      <DragDropContext onDragEnd={handleDragEnd}>
+    <ScrollContainer
+      className="p-8 flex cursor-grab"
+      hideScrollbars={false}
+      horizontal={!isDraggingItem}
+    >
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEndWrapper}>
         <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="flex overflow-x-auto"
+              className="flex"
             >
               {columns.map((col, index) => (
                 <Draggable key={col.id} draggableId={col.id} index={index}>
@@ -45,10 +64,12 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                         className="bg-gray-200 p-4 rounded-md w-80 min-h-[60px] flex flex-col"
                       >
                         {/* Column header with drag handle and delete button */}
-                        <div className="flex justify-between items-center mb-4">
+                        <div 
+                          className="flex justify-between items-center mb-4 cursor-grab active:cursor-grabbing "
+                          {...provided.dragHandleProps}
+                        >
                           <div
-                            {...provided.dragHandleProps}
-                            className="font-bold cursor-grab active:cursor-grabbing flex items-center gap-2"
+                            className="font-bold flex items-center gap-2"
                           >
                             <span className="text-gray-500">⠿</span>
                             <span>{col.title}</span>
@@ -97,6 +118,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                                           ? "bg-blue-200"
                                           : "bg-white"
                                       }`}
+                                      onClick={() => onCardClick(card)}
                                     >
                                       <span>{card.content}</span>
                                       <button
@@ -125,6 +147,12 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                             onChange={(e) =>
                               handleInputChange(col.id, e.target.value)
                             }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault(); // prevent form submit if inside a form
+                                addCard(col.id);
+                              }
+                            }}
                             className="flex-1 p-2 rounded border border-gray-300"
                           />
                           <button
@@ -191,7 +219,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
           )}
         </Droppable>
       </DragDropContext>
-    </div>
+    </ScrollContainer>
   );
 }
 

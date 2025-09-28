@@ -1,8 +1,17 @@
 import { DropResult } from "@hello-pangea/dnd";
 
+export interface ChecklistItem {
+  text: string;
+  completed: boolean;
+}
+
 export interface Card {
-  id: string;
-  content: string;
+  id: string;              // unique card ID
+  content: string;         // card title
+  description?: string;    // optional detailed description
+  checklist?: ChecklistItem[]; // optional checklist
+  createdAt?: string;      // optional timestamp
+  updatedAt?: string;      // optional timestamp
 }
 
 export interface Column {
@@ -24,6 +33,7 @@ export interface TrelloBoardsProps {
   deleteCard: (columnId: string, cardId: string) => void;
   addColumn: () => void;
   deleteColumn: (columnId: string) => void;
+  onCardClick: (card: Card) => void;
 }
 
 export interface Tab {

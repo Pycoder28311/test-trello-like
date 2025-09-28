@@ -5,12 +5,15 @@ import React, { useState, useRef } from 'react';
 import { FileItem, FileExplorerProps } from '../types/file-explorer';
 import FileExplorerNode from '../file-explorer/file-explorer-node';
 import CreateDropdown from '../file-explorer/create-dropdown';
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
   data,
   onUpdate,
   onFileSelect,
   columns,
+  onCardClick,
+  handleDragEnd,
 }) => {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
     new Set()
@@ -154,23 +157,76 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
       </div>
 
       {/* Trello-like Board Below */}
-      <aside className="w-full p-4 overflow-y-auto">
-        {columns.map((column) => (
-          <div key={column.id} className="mb-4 bg-gray-800 p-2 rounded">
-            <h3 className="font-bold mb-2">{column.title}</h3>
-            <ul className="ml-2">
-              {column.cards.map((card) => (
-                <li key={card.id} className="mb-1 p-1 bg-gray-700 rounded shadow-sm">
-                  {card.content}
-                </li>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        {/* Droppable for columns */}
+        <Droppable droppableId="columns" direction="vertical" type="COLUMN">
+          {(provided) => (
+            <div
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              className="flex flex-col h-full overflow-x-auto p-2"
+            >
+              {columns.map((col, index) => (
+                <Draggable key={col.id} draggableId={col.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`mb-4 p-2 rounded shadow-sm bg-gray-700 ${
+                        snapshot.isDragging ? "opacity-80" : "opacity-100"
+                      }`}
+                    >
+                      {/* Drag handle for column */}
+                      <div
+                        {...provided.dragHandleProps}
+                        className="cursor-grab font-bold mb-2 flex items-center gap-2"
+                      >
+                        ⠿ {col.title}
+                      </div>
+
+                      {/* Droppable cards */}
+                      <Droppable droppableId={col.id} type="CARD">
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.droppableProps}
+                            className={`flex flex-col gap-2 p-1 ${
+                              snapshot.isDraggingOver ? "bg-blue-50 rounded" : ""
+                            } min-h-[40px]`}
+                          >
+                            {col.cards.map((card, idx) => (
+                              <Draggable key={card.id} draggableId={card.id} index={idx}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    onClick={() => onCardClick(card)}
+                                    className={`p-2 rounded shadow-sm cursor-grab ${
+                                      snapshot.isDragging ? "bg-gray-500" : "bg-gray-600"
+                                    }`}
+                                  >
+                                    {card.content}
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                            {col.cards.length === 0 && (
+                              <p className="text-gray-400 text-sm italic">No tasks</p>
+                            )}
+                          </div>
+                        )}
+                      </Droppable>
+                    </div>
+                  )}
+                </Draggable>
               ))}
-              {column.cards.length === 0 && (
-                <li className="text-gray-400 italic">No tasks</li>
-              )}
-            </ul>
-          </div>
-        ))}
-      </aside>
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </div>
   );
 };

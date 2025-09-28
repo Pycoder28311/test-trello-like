@@ -1,4 +1,5 @@
-import { Column } from './tabs';
+import { Column, Card } from './tabs';
+import { DropResult } from "@hello-pangea/dnd";
 
 // types/file-explorer.ts
 export interface FileItem {
@@ -15,6 +16,8 @@ export interface FileExplorerProps {
   onUpdate: (data: FileItem[]) => void;
   onFileSelect?: (file: FileItem) => void;
   columns: Column[];
+  onCardClick: (card: Card) => void;
+  handleDragEnd: (result: DropResult) => void;
 }
 
 export interface CreateDropdownProps {
