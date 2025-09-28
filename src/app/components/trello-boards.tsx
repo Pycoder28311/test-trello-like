@@ -83,7 +83,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                           </button>
                         </div>
 
-                        <Droppable droppableId={col.id}>
+                        <Droppable droppableId={col.id} type="CARD">
                           {(provided, snapshot) => (
                             <div
                               {...provided.droppableProps}

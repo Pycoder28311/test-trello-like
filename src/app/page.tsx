@@ -8,6 +8,7 @@ import TrelloBoards from './components/trello-boards';
 import { DropResult } from "@hello-pangea/dnd";
 import ChromeTabs from './components/tabs/chrome-tabs';
 import { Card, Column } from './components/types/tabs';
+import { trelloHandlers } from "./components/trelloHandlers";
 
 export default function SimplePage() {
 
@@ -49,41 +50,23 @@ export default function SimplePage() {
     localStorage.setItem("files", JSON.stringify(files));
   }, [files]);
 
-  const openCardModal = (card: Card) => {
-    setSelectedCard(card);
-    setEditText(card.content); // prefill input
-    setIsModalOpen(true);
-    setIsEditing(false);
-  };
-
-  const closeCardModal = () => {
-    setSelectedCard(null);
-    setIsModalOpen(false);
-  };
-
-  const saveCardEdit = () => {
-    if (!selectedCard) return;
-
-    setColumns((prevCols) =>
-      prevCols.map((col) => ({
-        ...col,
-        cards: col.cards.map((c) =>
-          c.id === selectedCard.id ? { ...c, content: editText } : c
-        ),
-      }))
-    );
-
-    setSelectedCard((prev) => (prev ? { ...prev, content: editText } : prev));
-    setIsEditing(false);
-    const updatedCard = { ...selectedCard, content: editText.trim() || selectedCard.content };
-    setSelectedCard(updatedCard);
-    updateCard(updatedCard);
-  };
-
+  const handlers = trelloHandlers({
+    columns,
+    setColumns,
+    selectedCard,
+    setSelectedCard,
+    newCardTexts,
+    setNewCardTexts,
+    newColumnTitle,
+    setNewColumnTitle,
+    setIsAddingColumn,
+    editText,
+    setEditText,
+    setIsEditing,
+  });
 
   const handleDragEnd = (result: DropResult) => {
     const { source, destination, type } = result;
-    
     if (!destination) return;
 
     // Handle column drag and drop
@@ -95,9 +78,9 @@ export default function SimplePage() {
       return;
     }
 
-    // Handle card drag and drop (existing logic)
+    // Handle card drag and drop within the same column
     if (source.droppableId === destination.droppableId) {
-      const colIndex = columns.findIndex((col) => col.id === source.droppableId);
+      const colIndex = columns.findIndex(col => col.id === source.droppableId);
       const col = columns[colIndex];
       const updatedCards = Array.from(col.cards);
       const [movedCard] = updatedCards.splice(source.index, 1);
@@ -106,9 +89,11 @@ export default function SimplePage() {
       const newColumns = Array.from(columns);
       newColumns[colIndex] = { ...col, cards: updatedCards };
       setColumns(newColumns);
-    } else {
-      const sourceColIndex = columns.findIndex((col) => col.id === source.droppableId);
-      const destColIndex = columns.findIndex((col) => col.id === destination.droppableId);
+    } 
+    // Handle card drag and drop across different columns
+    else {
+      const sourceColIndex = columns.findIndex(col => col.id === source.droppableId);
+      const destColIndex = columns.findIndex(col => col.id === destination.droppableId);
 
       const sourceCol = columns[sourceColIndex];
       const destCol = columns[destColIndex];
@@ -127,92 +112,6 @@ export default function SimplePage() {
     }
   };
 
-  const handleInputChange = (columnId: string, value: string) => {
-    setNewCardTexts({ ...newCardTexts, [columnId]: value });
-  };
-
-
-  const addCard = (columnId: string) => {
-    const text = newCardTexts[columnId]?.trim();
-    if (!text) return;
-
-    const newColumns = columns.map((col) => {
-      if (col.id === columnId) {
-        const newCard: Card = { id: Date.now().toString(), content: text };
-        return { ...col, cards: [...col.cards, newCard] };
-      }
-      return col;
-    });
-    setColumns(newColumns);
-    setNewCardTexts({ ...newCardTexts, [columnId]: "" });
-  };
-
-  const deleteCard = (columnId: string, cardId: string) => {
-    const newColumns = columns.map((col) => {
-      if (col.id === columnId) {
-        return { ...col, cards: col.cards.filter((c) => c.id !== cardId) };
-      }
-      return col;
-    });
-    setColumns(newColumns);
-  };
-
-  const addColumn = () => {
-    const title = newColumnTitle.trim();
-    if (!title) return;
-
-    const newColumn: Column = {
-      id: `col-${Date.now()}`,
-      title: title,
-      cards: [],
-    };
-
-    setColumns([...columns, newColumn]);
-    setNewColumnTitle("");
-    setIsAddingColumn(false);
-  };
-
-  const deleteColumn = (columnId: string) => {
-    const newColumns = columns.filter((col) => col.id !== columnId);
-    setColumns(newColumns);
-  };
-
-
-  const updateCard = (updatedCard: Card) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((col) => ({
-        ...col,
-        cards: col.cards.map((c) =>
-          c.id === updatedCard.id ? { ...c, ...updatedCard } : c
-        ),
-      }))
-    );
-  };
-
-  const handleDescriptionChange = (value: string) => {
-    if (!selectedCard) return;
-    const updatedCard = { ...selectedCard, description: value };
-    setSelectedCard(updatedCard);
-    updateCard(updatedCard); // persist
-  };
-
-  const toggleChecklistItem = (index: number) => {
-    if (!selectedCard) return;
-    const newChecklist = [...(selectedCard.checklist || [])];
-    newChecklist[index].completed = !newChecklist[index].completed;
-    const updatedCard = { ...selectedCard, checklist: newChecklist };
-    setSelectedCard(updatedCard);
-    updateCard(updatedCard); // persist
-  };
-
-  const addChecklistItem = (text: string) => {
-    if (!selectedCard || !text.trim()) return;
-    const newChecklist = [...(selectedCard.checklist || []), { text, completed: false }];
-    const updatedCard = { ...selectedCard, checklist: newChecklist };
-    setSelectedCard(updatedCard);
-    updateCard(updatedCard); // persist
-  };
-
   return (
     <div>
       <ChromeTabs />
@@ -222,7 +121,7 @@ export default function SimplePage() {
           onUpdate={setFiles}
           onFileSelect={handleFileSelect}
           columns={columns}
-          onCardClick={openCardModal}
+          onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
 
@@ -234,18 +133,18 @@ export default function SimplePage() {
           isAddingColumn={isAddingColumn}
           setIsAddingColumn={setIsAddingColumn}
           handleDragEnd={handleDragEnd}
-          handleInputChange={handleInputChange}
-          addCard={addCard}
-          deleteCard={deleteCard}
-          addColumn={addColumn}
-          deleteColumn={deleteColumn}
-          onCardClick={openCardModal}
+          handleInputChange={handlers.handleInputChange}
+          addCard={handlers.addCard}
+          deleteCard={handlers.deleteCard}
+          addColumn={handlers.addColumn}
+          deleteColumn={handlers.deleteColumn}
+          onCardClick={handlers.openCardModal}
         />
       </div>
       {isModalOpen && selectedCard && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={closeCardModal}
+          onClick={handlers.closeCardModal}
         >
           <div
             className="bg-white p-6 rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto"
@@ -260,7 +159,7 @@ export default function SimplePage() {
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") saveCardEdit();
+                  if (e.key === "Enter") handlers.saveCardEdit();
                 }}
                 className="w-full border rounded p-2 mb-4"
               />
@@ -277,7 +176,7 @@ export default function SimplePage() {
                 className="w-full border rounded p-2"
                 rows={3}
                 value={selectedCard?.description || ""}
-                onChange={(e) => handleDescriptionChange(e.target.value)}
+                onChange={(e) => handlers.handleDescriptionChange(e.target.value)}
               />
             </div>
 
@@ -289,7 +188,7 @@ export default function SimplePage() {
                   <input
                     type="checkbox"
                     checked={item.completed}
-                    onChange={() => toggleChecklistItem(idx)}
+                    onChange={() => handlers.toggleChecklistItem(idx)}
                   />
                   <span className={item.completed ? "line-through text-gray-400" : ""}>
                     {item.text}
@@ -307,14 +206,14 @@ export default function SimplePage() {
                   onChange={(e) => setNewChecklistItem(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      addChecklistItem(newChecklistItem);
+                      handlers.addChecklistItem(newChecklistItem);
                       setNewChecklistItem("");
                     }
                   }}
                 />
                 <button
                   onClick={() => {
-                    addChecklistItem(newChecklistItem);
+                    handlers.addChecklistItem(newChecklistItem);
                     setNewChecklistItem("");
                   }}
                   className="px-3 bg-blue-500 text-white rounded"
@@ -330,7 +229,7 @@ export default function SimplePage() {
                 <>
                   <button
                     className="px-4 py-2 bg-green-600 text-white rounded"
-                    onClick={saveCardEdit}
+                    onClick={handlers.saveCardEdit}
                   >
                     Save
                   </button>
@@ -344,7 +243,7 @@ export default function SimplePage() {
               ) : (
                 <button
                   className="px-4 py-2 bg-gray-400 text-white rounded"
-                  onClick={closeCardModal}
+                  onClick={handlers.closeCardModal}
                 >
                   Close
                 </button>
