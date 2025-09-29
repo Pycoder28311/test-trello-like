@@ -86,6 +86,27 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     updateCard(updatedCard);
   };
 
+  const addChecklistItemInCard = (card: Card, text: string) => {
+    if (!card || !text.trim()) return;
+    const newChecklist = [...(card.checklist || []), { text, completed: false }];
+    const updatedCard = { ...card, checklist: newChecklist };
+    updateCard(updatedCard);
+  };
+
+  const deleteChecklistItem = (cardId: string, index: number) => {
+    setColumns((prevCols) =>
+      prevCols.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => {
+          if (c.id !== cardId) return c;
+          const updated = [...(c.checklist ?? [])];
+          updated.splice(index, 1);
+          return { ...c, checklist: updated };
+        }),
+      }))
+    );
+  };
+
   const handleInputChange = (columnId: string, value: string) => {
     setNewCardTexts({ ...newCardTexts, [columnId]: value });
   };
@@ -127,10 +148,12 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     handleDescriptionChange,
     toggleChecklistItem,
     addChecklistItem,
+    addChecklistItemInCard,
     handleInputChange,
     addCard,
     deleteCard,
     addColumn,
     deleteColumn,
+    deleteChecklistItem,
   };
 };

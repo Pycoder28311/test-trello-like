@@ -34,6 +34,11 @@ export interface TrelloBoardsProps {
   addColumn: () => void;
   deleteColumn: (columnId: string) => void;
   onCardClick: (card: Card) => void;
+  toggleChecklistItem: (cardId: string, idx: number) => void;
+  addChecklistItem: (text: string) => void;
+  addChecklistItemInCard: (card: Card, text: string) => void;
+  reorderChecklistInCard: (cardId: string, startIndex: number, endIndex: number) => void;
+  deleteChecklistItem: (cardId: string, index: number) => void;
 }
 
 export interface Tab {

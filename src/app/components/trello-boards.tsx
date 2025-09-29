@@ -20,11 +20,18 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   addColumn,
   deleteColumn,
   onCardClick,
+  toggleChecklistItem,
+  addChecklistItem,
+  addChecklistItemInCard,
+  reorderChecklistInCard,
+  deleteChecklistItem,
 }) => {
   const [isDraggingItem, setIsDraggingItem] = useState(false);
+  const [openChecklists, setOpenChecklists] = useState<{ [cardId: string]: boolean }>({});
+  const [newChecklistItem, setNewChecklistItem] = useState("");
 
   const handleDragStart = (start: DragStart) => {
-    if (start.type === "COLUMN" || start.type === "CARD") {
+    if (start.type === "COLUMN" || start.type === "CARD" || start.type === "CHECKLIST") {
       setIsDraggingItem(true); // disable scroll while dragging item
     }
   };
@@ -32,6 +39,13 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   const handleDragEndWrapper = (result: DropResult) => {
     setIsDraggingItem(false); // re-enable scroll after drag
     handleDragEnd(result);
+  };
+
+  const toggleChecklist = (cardId: string) => {
+    setOpenChecklists((prev) => ({
+      ...prev,
+      [cardId]: !prev[cardId],
+    }));
   };
 
   return (
@@ -103,32 +117,112 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                               )}
                               
                               {col.cards.map((card, index) => (
-                                <Draggable
-                                  key={card.id}
-                                  draggableId={card.id}
-                                  index={index}
-                                >
+                                <Draggable key={card.id} draggableId={card.id} index={index}>
                                   {(provided, snapshot) => (
                                     <div
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      className={`p-4 mb-2 rounded shadow flex justify-between items-center ${
-                                        snapshot.isDragging
-                                          ? "bg-blue-200"
-                                          : "bg-white"
+                                      className={`p-4 mb-2 rounded shadow flex flex-col bg-white ${
+                                        snapshot.isDragging ? "bg-blue-200" : "bg-white"
                                       }`}
-                                      onClick={() => onCardClick(card)}
                                     >
-                                      <span>{card.content}</span>
-                                      <button
-                                        onClick={() =>
-                                          deleteCard(col.id, card.id)
-                                        }
-                                        className="text-red-500 font-bold hover:text-red-700"
-                                      >
-                                        ×
-                                      </button>
+                                      <div className="flex justify-between items-center">
+                                        <div
+                                          className="flex items-center gap-2 cursor-pointer"
+                                          {...provided.dragHandleProps} // allow dragging by entire header
+                                          onClick={() => onCardClick(card)}
+                                        >
+                                          <span>{card.content}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {/* Toggle checklist arrow */}
+                                          <button
+                                            onClick={() => toggleChecklist(card.id)}
+                                            className="text-gray-500 hover:text-gray-700"
+                                          >
+                                            {openChecklists[card.id] ? "▼" : "▶"}
+                                          </button>
+
+                                          {/* Delete button */}
+                                          <button
+                                            onClick={() => deleteCard(col.id, card.id)}
+                                            className="text-red-500 font-bold hover:text-red-700"
+                                          >
+                                            ×
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      {/* Checklist section */}
+                                      {openChecklists[card.id] && (
+                                        <div className="mt-2 border-t pt-2">
+                                            <Droppable droppableId={`checklist-${card.id}`} type="CHECKLIST">
+                                              {(provided) => (
+                                                <div ref={provided.innerRef} {...provided.droppableProps}>
+                                                  {card.checklist && card.checklist.map((item, idx) => (
+                                                    <Draggable key={idx} draggableId={`${card.id}-check-${idx}`} index={idx}>
+                                                      {(provided, snapshot) => (
+                                                        <div
+                                                          ref={provided.innerRef}
+                                                          {...provided.draggableProps}
+                                                          {...provided.dragHandleProps}
+                                                          className={`flex items-center gap-2 mb-1 p-2 rounded border ${
+                                                            snapshot.isDragging ? "bg-blue-50 border-blue-400" : "bg-white"
+                                                          }`}
+                                                        >
+                                                          <input
+                                                            type="checkbox"
+                                                            checked={item.completed}
+                                                            onChange={() => toggleChecklistItem(card.id, idx)}
+                                                          />
+                                                          <span className={item.completed ? "line-through text-gray-400" : ""}>
+                                                            {item.text}
+                                                          </span>
+                                                          <button
+                                                            onClick={(e) => {
+                                                              e.stopPropagation(); // prevent dragging when clicking delete
+                                                              deleteChecklistItem(card.id, idx);
+                                                            }}
+                                                            className="text-red-500 hover:text-red-700 font-bold"
+                                                          >
+                                                            ×
+                                                          </button>
+                                                        </div>
+                                                      )}
+                                                    </Draggable>
+                                                  ))}
+                                                  {provided.placeholder}
+                                                </div>
+                                              )}
+                                            </Droppable>
+
+                                          {/* Add new checklist item */}
+                                          <div className="flex gap-2 mt-2">
+                                            <input
+                                              type="text"
+                                              placeholder="New item..."
+                                              className="flex-1 border rounded p-2"
+                                              value={newChecklistItem}
+                                              onChange={(e) => setNewChecklistItem(e.target.value)}
+                                              onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                  addChecklistItemInCard(card, newChecklistItem);
+                                                  setNewChecklistItem("");
+                                                }
+                                              }}
+                                            />
+                                            <button
+                                              onClick={() => {
+                                                addChecklistItemInCard(card, newChecklistItem);
+                                                setNewChecklistItem("");
+                                              }}
+                                              className="px-3 bg-blue-500 text-white rounded"
+                                            >
+                                              Add
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </Draggable>
