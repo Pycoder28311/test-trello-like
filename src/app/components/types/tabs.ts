@@ -22,14 +22,14 @@ export interface Column {
 
 export interface TrelloBoardsProps {
   columns: Column[];
-  newCardTexts: Record<string, string>; // input values per column
+  newCardTexts: string; // input values per column
+  setNewCardTexts: React.Dispatch<React.SetStateAction<string>>;
   newColumnTitle: string;
   setNewColumnTitle: React.Dispatch<React.SetStateAction<string>>;
   isAddingColumn: boolean;
   setIsAddingColumn: React.Dispatch<React.SetStateAction<boolean>>;
   handleDragEnd: (result: DropResult) => void;
-  handleInputChange: (columnId: string, value: string) => void;
-  addCard: (columnId: string) => void;
+  addCard: (columnId: string, text: string) => void;
   deleteCard: (columnId: string, cardId: string) => void;
   addColumn: () => void;
   deleteColumn: (columnId: string) => void;
@@ -39,6 +39,9 @@ export interface TrelloBoardsProps {
   addChecklistItemInCard: (card: Card, text: string) => void;
   reorderChecklistInCard: (cardId: string, startIndex: number, endIndex: number) => void;
   deleteChecklistItem: (cardId: string, index: number) => void;
+  newChecklistItem: string;
+  setNewChecklistItem: React.Dispatch<React.SetStateAction<string>>;
+  editChecklistItem: (cardId: string, index: number, newText: string) => void;
 }
 
 export interface Tab {

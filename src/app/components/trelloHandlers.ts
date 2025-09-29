@@ -7,8 +7,6 @@ interface TrelloHandlersProps {
   setColumns: Dispatch<SetStateAction<Column[]>>;
   selectedCard: Card | null;
   setSelectedCard: Dispatch<SetStateAction<Card | null>>;
-  newCardTexts: { [key: string]: string };
-  setNewCardTexts: Dispatch<SetStateAction<{ [key: string]: string }>>;
   newColumnTitle: string;
   setNewColumnTitle: Dispatch<SetStateAction<string>>;
   setIsAddingColumn: Dispatch<SetStateAction<boolean>>;
@@ -23,8 +21,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     setColumns,
     selectedCard,
     setSelectedCard,
-    newCardTexts,
-    setNewCardTexts,
     newColumnTitle,
     setNewColumnTitle,
     setIsAddingColumn,
@@ -107,20 +103,14 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     );
   };
 
-  const handleInputChange = (columnId: string, value: string) => {
-    setNewCardTexts({ ...newCardTexts, [columnId]: value });
-  };
-
-  const addCard = (columnId: string) => {
-    const text = newCardTexts[columnId]?.trim();
+  const addCard = (columnId: string, text: string) => {
     if (!text) return;
     const newColumns = columns.map((col) =>
       col.id === columnId
-        ? { ...col, cards: [...col.cards, { id: Date.now().toString(), content: text }] }
+        ? { ...col, cards: [...col.cards, { id: Date.now().toString(), content: text, checklist: [] }] }
         : col
     );
     setColumns(newColumns);
-    setNewCardTexts({ ...newCardTexts, [columnId]: "" });
   };
 
   const deleteCard = (columnId: string, cardId: string) => {
@@ -141,6 +131,33 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     setColumns(columns.filter(col => col.id !== columnId));
   };
 
+  const editChecklistItem = (cardId: string, index: number, newText: string) => {
+    setColumns((prevColumns) =>
+      prevColumns.map((col) => ({
+        ...col,
+        cards: col.cards.map((c) => {
+          if (c.id === cardId) {
+            // Copy the checklist array
+            const updatedChecklist = [...(c.checklist ?? [])];
+            // Update the text of the specific item
+            updatedChecklist[index] = { ...updatedChecklist[index], text: newText };
+            return { ...c, checklist: updatedChecklist };
+          }
+          return c;
+        }),
+      }))
+    );
+    console.log(cardId,index,newText)
+
+    // Optional: if you have selectedCard state, update it too
+    setSelectedCard((prev) => {
+      if (!prev || prev.id !== cardId) return prev;
+      const updatedChecklist = [...(prev.checklist ?? [])];
+      updatedChecklist[index] = { ...updatedChecklist[index], text: newText };
+      return { ...prev, checklist: updatedChecklist };
+    });
+  };
+
   return {
     openCardModal,
     closeCardModal,
@@ -149,11 +166,11 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     toggleChecklistItem,
     addChecklistItem,
     addChecklistItemInCard,
-    handleInputChange,
     addCard,
     deleteCard,
     addColumn,
     deleteColumn,
     deleteChecklistItem,
+    editChecklistItem,
   };
 };

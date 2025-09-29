@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable, DropResult, DragStart } from "@hello-pangea/dnd";
 import { TrelloBoardsProps } from './types/tabs';
 import ScrollContainer from "react-indiana-drag-scroll";
+import ChecklistInput from "./ChecklistInput";
+import AddCardInput from "./AddCardItem";
 
 // Correctly typed component
 const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   columns,
   newCardTexts,
+  setNewCardTexts,
   newColumnTitle,
   setNewColumnTitle,
   isAddingColumn,
   setIsAddingColumn,
   handleDragEnd,
-  handleInputChange,
   addCard,
   deleteCard,
   addColumn,
@@ -25,10 +27,26 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   addChecklistItemInCard,
   reorderChecklistInCard,
   deleteChecklistItem,
+  newChecklistItem,
+  setNewChecklistItem,
+  editChecklistItem,
 }) => {
   const [isDraggingItem, setIsDraggingItem] = useState(false);
   const [openChecklists, setOpenChecklists] = useState<{ [cardId: string]: boolean }>({});
-  const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
+  const [editingChecklistItem, setEditingChecklistItem] = useState<{
+    cardId: string;
+    index: number;
+  } | null>(null);
+
+  // Sync inputValues whenever columns change
+  useEffect(() => {
+    const newValues: Record<string, string> = {};
+    columns.forEach((col) => {
+      newValues[col.id] = inputValues[col.id] || ""; // keep existing value if present
+    });
+    setInputValues(newValues);
+  }, [columns]);
 
   const handleDragStart = (start: DragStart) => {
     if (start.type === "COLUMN" || start.type === "CARD" || start.type === "CHECKLIST") {
@@ -53,6 +71,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
       className="p-8 flex cursor-grab"
       hideScrollbars={false}
       horizontal={!isDraggingItem}
+      ignoreElements='input' // <-- This is the key
     >
       <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEndWrapper}>
         <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
@@ -122,28 +141,57 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                                     <div
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
+                                            {...provided.dragHandleProps}
                                       className={`p-4 mb-2 rounded shadow flex flex-col bg-white ${
                                         snapshot.isDragging ? "bg-blue-200" : "bg-white"
                                       }`}
                                     >
                                       <div className="flex justify-between items-center">
-                                        <div
-                                          className="flex items-center gap-2 cursor-pointer"
-                                          {...provided.dragHandleProps} // allow dragging by entire header
-                                          onClick={() => onCardClick(card)}
-                                        >
-                                          <span>{card.content}</span>
-                                        </div>
+                                        {/* Card name droppable */}
+                                        {!openChecklists[card.id] ? (
+                                          <Droppable
+                                            droppableId={`checklist-${card.id}`}
+                                            type="CHECKLIST"
+                                            isDropDisabled={false}
+                                          >
+                                            {(providedDroppable, snapshotDroppable) => (
+                                              <div
+                                                ref={providedDroppable.innerRef}
+                                                {...providedDroppable.droppableProps}
+                                                className="flex items-center gap-2 cursor-pointer"
+                                                onClick={() => onCardClick(card)}
+                                              >
+                                                <span
+                                                  className={`${
+                                                    snapshotDroppable.isDraggingOver ? "text-blue-500" : ""
+                                                  }`}
+                                                >
+                                                  {card.content} 
+                                                </span>
+                                                {providedDroppable.placeholder}
+                                              </div>
+                                            )}
+                                          </Droppable>
+                                        ) : (
+                                          <div
+                                            className="flex items-center gap-2 cursor-pointer"
+                                            onClick={() => onCardClick(card)}
+                                          >
+                                            <span
+                                            >
+                                              {card.content}
+                                            </span>
+                                          </div>
+                                        )}
+
+                                        {/* Drag handle & buttons */}
                                         <div className="flex items-center gap-2">
-                                          {/* Toggle checklist arrow */}
                                           <button
                                             onClick={() => toggleChecklist(card.id)}
                                             className="text-gray-500 hover:text-gray-700"
                                           >
                                             {openChecklists[card.id] ? "▼" : "▶"}
                                           </button>
-
-                                          {/* Delete button */}
                                           <button
                                             onClick={() => deleteCard(col.id, card.id)}
                                             className="text-red-500 font-bold hover:text-red-700"
@@ -152,13 +200,27 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                                           </button>
                                         </div>
                                       </div>
-
                                       {/* Checklist section */}
                                       {openChecklists[card.id] && (
                                         <div className="mt-2 border-t pt-2">
                                             <Droppable droppableId={`checklist-${card.id}`} type="CHECKLIST">
-                                              {(provided) => (
-                                                <div ref={provided.innerRef} {...provided.droppableProps}>
+                                              {(provided, snapshot) => (
+                                                <div 
+                                                  ref={provided.innerRef} 
+                                                  {...provided.droppableProps} 
+                                                  className={`flex-1 transition-colors duration-200 ${
+                                                    snapshot.isDraggingOver 
+                                                      ? 'bg-blue-50 rounded' 
+                                                      : ''
+                                                  } ${
+                                                    card.checklist && card.checklist.length === 0 
+                                                      ? 'min-h-[50px] flex items-center justify-center border-2 border-dashed border-gray-300 rounded' 
+                                                      : ''
+                                                  }`}
+                                                >
+                                                  {card.checklist && card.checklist.length === 0 && !snapshot.isDraggingOver && (
+                                                    <p className="text-gray-400 text-sm">Drop items here</p>
+                                                  )}
                                                   {card.checklist && card.checklist.map((item, idx) => (
                                                     <Draggable key={idx} draggableId={`${card.id}-check-${idx}`} index={idx}>
                                                       {(provided, snapshot) => (
@@ -175,9 +237,26 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                                                             checked={item.completed}
                                                             onChange={() => toggleChecklistItem(card.id, idx)}
                                                           />
-                                                          <span className={item.completed ? "line-through text-gray-400" : ""}>
-                                                            {item.text}
-                                                          </span>
+
+                                                          {editingChecklistItem?.cardId === card.id &&
+                                                          editingChecklistItem.index === idx ? (
+                                                            <input
+                                                              type="text"
+                                                              value={item.text}
+                                                              onChange={(e) => {
+                                                                const newText = e.target.value;
+                                                                editChecklistItem(card.id, idx, newText);
+                                                              }}
+                                                              onBlur={() => setEditingChecklistItem(null)}
+                                                              onKeyDown={(e) => e.key === "Enter" && setEditingChecklistItem(null)}
+                                                              autoFocus
+                                                              className="flex-1 border rounded p-1"
+                                                            />
+                                                          ) : (
+                                                            <span className={item.completed ? "line-through text-gray-400" : ""} onClick={() => setEditingChecklistItem({ cardId: card.id, index: idx })}>
+                                                              {item.text}
+                                                            </span>
+                                                          )}
                                                           <button
                                                             onClick={(e) => {
                                                               e.stopPropagation(); // prevent dragging when clicking delete
@@ -197,30 +276,9 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                                             </Droppable>
 
                                           {/* Add new checklist item */}
-                                          <div className="flex gap-2 mt-2">
-                                            <input
-                                              type="text"
-                                              placeholder="New item..."
-                                              className="flex-1 border rounded p-2"
-                                              value={newChecklistItem}
-                                              onChange={(e) => setNewChecklistItem(e.target.value)}
-                                              onKeyDown={(e) => {
-                                                if (e.key === "Enter") {
-                                                  addChecklistItemInCard(card, newChecklistItem);
-                                                  setNewChecklistItem("");
-                                                }
-                                              }}
-                                            />
-                                            <button
-                                              onClick={() => {
-                                                addChecklistItemInCard(card, newChecklistItem);
-                                                setNewChecklistItem("");
-                                              }}
-                                              className="px-3 bg-blue-500 text-white rounded"
-                                            >
-                                              Add
-                                            </button>
-                                          </div>
+                                          <ChecklistInput addChecklistItem={(text) => {
+                                            addChecklistItemInCard(card, text)
+                                          }} />
                                         </div>
                                       )}
                                     </div>
@@ -232,30 +290,12 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                           )}
                         </Droppable>
 
-                        {/* Input to add new card */}
-                        <div className="mt-2 flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="New card..."
-                            value={newCardTexts[col.id] || ""}
-                            onChange={(e) =>
-                              handleInputChange(col.id, e.target.value)
-                            }
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault(); // prevent form submit if inside a form
-                                addCard(col.id);
-                              }
-                            }}
-                            className="flex-1 p-2 rounded border border-gray-300"
-                          />
-                          <button
-                            onClick={() => addCard(col.id)}
-                            className="px-4 bg-blue-500 text-white rounded hover:bg-blue-600"
-                          >
-                            Add
-                          </button>
-                        </div>
+                        <AddCardInput
+                          colId={col.id}
+                          addCard={(id, text) => {
+                            addCard(id, text)
+                          }}
+                        />
                       </div>
                     </div>
                   )}

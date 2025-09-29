@@ -16,13 +16,16 @@ export default function SimplePage() {
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
-  const [newCardTexts, setNewCardTexts] = useState<{ [key: string]: string }>(
-    {}
-  );
+  const [newCardTexts, setNewCardTexts] = useState("");
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
   const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [editingItem, setEditingItem] = useState<{
+    cardId: string;
+    index: number;
+    text: string;
+  } | null>(null);
 
   const handleFileSelect = (file: FileItem) => {
     console.log('Selected file:', file);
@@ -54,8 +57,6 @@ export default function SimplePage() {
     setColumns,
     selectedCard,
     setSelectedCard,
-    newCardTexts,
-    setNewCardTexts,
     newColumnTitle,
     setNewColumnTitle,
     setIsAddingColumn,
@@ -112,8 +113,13 @@ export default function SimplePage() {
     }
 
     if (type === "CHECKLIST") {
-      const sourceCardId = source.droppableId.replace("checklist-", "");
-      const destCardId = destination.droppableId.replace("checklist-", "");
+      // Normalize source and destination IDs
+      const sourceCardId = source.droppableId
+        .replace("checklist-", "")
+        .replace("checklist-placeholder-", "");
+      const destCardId = destination.droppableId
+        .replace("checklist-", "")
+        .replace("checklist-placeholder-", "");
 
       let movedItem: ChecklistItem | null = null;
 
@@ -130,13 +136,21 @@ export default function SimplePage() {
         }),
       }));
 
-      // Add item to destination card
+      // Add item to destination card (whether placeholder or checklist)
       const finalColumns = newColumns.map((col) => ({
         ...col,
         cards: col.cards.map((c) => {
+          console.log(c.id,destCardId)
           if (c.id === destCardId && movedItem) {
-            const updated = c.checklist ? [...c.checklist] : []; // <-- ensures array exists
-            updated.splice(destination.index, 0, movedItem);
+            const updated = c.checklist ? [...c.checklist] : [];
+
+            // If dropping on card name (empty droppable), append to the end
+            if (destination.droppableId.startsWith("checklist-placeholder-")) {
+              updated.push(movedItem);
+            } else {
+              updated.splice(destination.index, 0, movedItem);
+            }
+
             return { ...c, checklist: updated };
           }
           return c;
@@ -218,6 +232,11 @@ export default function SimplePage() {
     );
   };
 
+  const [editingChecklistItem, setEditingChecklistItem] = useState<{
+    cardId: string;
+    index: number;
+  } | null>(null);
+
   return (
     <div>
       <ChromeTabs />
@@ -234,12 +253,12 @@ export default function SimplePage() {
         <TrelloBoards
           columns={columns}
           newCardTexts={newCardTexts}
+          setNewCardTexts={setNewCardTexts}
           newColumnTitle={newColumnTitle}
           setNewColumnTitle={setNewColumnTitle}
           isAddingColumn={isAddingColumn}
           setIsAddingColumn={setIsAddingColumn}
           handleDragEnd={handleDragEnd}
-          handleInputChange={handlers.handleInputChange}
           addCard={handlers.addCard}
           deleteCard={handlers.deleteCard}
           addColumn={handlers.addColumn}
@@ -250,6 +269,9 @@ export default function SimplePage() {
           addChecklistItem={handlers.addChecklistItem}
           addChecklistItemInCard={handlers.addChecklistItemInCard}
           deleteChecklistItem={handlers.deleteChecklistItem}
+          newChecklistItem={newChecklistItem}
+          setNewChecklistItem={setNewChecklistItem}
+          editChecklistItem={handlers.editChecklistItem}
         />
       </div>
       {selectedCard && (
@@ -326,11 +348,47 @@ export default function SimplePage() {
                                 checked={item.completed}
                                 onChange={() => handlers.toggleChecklistItem(idx)}
                               />
-                              <span
-                                className={item.completed ? "line-through text-gray-400" : ""}
-                              >
-                                {item.text}
-                              </span>
+                              {editingChecklistItem?.cardId === selectedCard.id && editingChecklistItem.index === idx ? (
+                                <input
+                                  type="text"
+                                  value={item.text}
+                                  onChange={(e) => {
+                                    const newText = e.target.value;
+                                    setColumns((prevColumns) =>
+                                      prevColumns.map((col) => ({
+                                        ...col,
+                                        cards: col.cards.map((c) => {
+                                          if (c.id === selectedCard.id) {
+                                            console.log(c)
+                                            const updatedChecklist = [...(c.checklist ?? [])];
+                                            updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
+                                            return { ...c, checklist: updatedChecklist };
+                                          }
+                                          return c;
+                                        }),
+                                      }))
+                                    );
+                                    setSelectedCard((prev) => {
+                                      if (!prev) return prev;
+                                      const updatedChecklist = [...(prev.checklist ?? [])];
+                                      updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
+                                      return { ...prev, checklist: updatedChecklist };
+                                    });
+                                  }}
+                                  onBlur={() => setEditingChecklistItem(null)}
+                                  onKeyDown={(e) => e.key === "Enter" && setEditingChecklistItem(null)}
+                                  autoFocus
+                                  className={`flex-1 border rounded p-1 ${
+                                    item.completed ? "line-through text-gray-400" : ""
+                                  }`}
+                                />
+                              ) : (
+                                <span className={item.completed ? "line-through text-gray-400" : ""} onClick={() => {
+                                  setEditingChecklistItem({ cardId: selectedCard.id, index: idx });
+                                }}>
+                                  {item.text}
+                                </span>
+                              )}
                             </div>
                           )}
                         </Draggable>
