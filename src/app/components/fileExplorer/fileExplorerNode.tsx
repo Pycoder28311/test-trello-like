@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import CreateDropdown from './create-dropdown';
-import { FileExplorerNodeProps } from '../types/file-explorer';
+import CreateDropdown from './createDropdown';
+import { FileExplorerNodeProps } from '../types/fileExplorer';
 
 const FileExplorerNode: React.FC<FileExplorerNodeProps> = ({
   item,

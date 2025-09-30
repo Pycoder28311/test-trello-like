@@ -1,4 +1,4 @@
-import { Column, Card } from './tabs';
+import { Column, Card } from './tabsAndTrello';
 import { DropResult } from "@hello-pangea/dnd";
 
 // types/file-explorer.ts

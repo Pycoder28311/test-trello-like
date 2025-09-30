@@ -1,19 +1,5 @@
-// trelloHandlers.ts
-import { Dispatch, SetStateAction } from "react";
-import { Column, Card, ChecklistItem } from "./types/tabs"; // import your types
-
-interface TrelloHandlersProps {
-  columns: Column[];
-  setColumns: Dispatch<SetStateAction<Column[]>>;
-  selectedCard: Card | null;
-  setSelectedCard: Dispatch<SetStateAction<Card | null>>;
-  newColumnTitle: string;
-  setNewColumnTitle: Dispatch<SetStateAction<string>>;
-  setIsAddingColumn: Dispatch<SetStateAction<boolean>>;
-  editText: string;
-  setEditText: Dispatch<SetStateAction<string>>;
-  setIsEditing: Dispatch<SetStateAction<boolean>>;
-}
+import { Card } from "../types/tabsAndTrello"; // import your types
+import { TrelloHandlersProps } from "../types/tabsAndTrello";
 
 export const trelloHandlers = (props: TrelloHandlersProps) => {
   const {

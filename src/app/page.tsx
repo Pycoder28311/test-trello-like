@@ -2,55 +2,87 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import FileExplorerSidebar from './components/file-explorer/file-explorer-sidebar';
-import { FileItem } from './components/types/file-explorer';
-import TrelloBoards from './components/trello-boards';
-import ChromeTabs from './components/tabs/chrome-tabs';
-import { Card, Column, ChecklistItem } from './components/types/tabs';
-import { trelloHandlers } from "./components/trelloHandlers";
-import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
+import FileExplorerSidebar from './components/fileExplorer/fileExplorerSidebar';
+import { FileItem } from './components/types/fileExplorer';
+import TrelloBoards from './components/trello/trelloBoards';
+import ChromeTabs from './components/tabs/chromeTabs';
+import { Card, Column, ChecklistItem } from './components/types/tabsAndTrello';
+import { trelloHandlers } from "./components/trello/trelloHandlers";
+import { DropResult } from "@hello-pangea/dnd";
+import CardModal from './components/trello/cardModal';
+
+export interface Project {
+  id: string;          // unique project ID
+  title: string;       // project name (shown on the tab)
+  isActive: boolean;   // whether this project is currently active
+  isNew: boolean;      // flag for newly created projects needing naming
+  columns: Column[];   // the columns belonging to this project
+  favicon?: string;
+  position: number;
+}
+
+type Projects = {
+  [key: string]: Project;
+};
 
 export default function SimplePage() {
 
   const [newColumnTitle, setNewColumnTitle] = useState("");
   const [isAddingColumn, setIsAddingColumn] = useState(false);
-  const [columns, setColumns] = useState<Column[]>([]);
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [newCardTexts, setNewCardTexts] = useState("");
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
-  const [newChecklistItem, setNewChecklistItem] = useState("");
-  const [editingItem, setEditingItem] = useState<{
-    cardId: string;
-    index: number;
-    text: string;
-  } | null>(null);
 
   const handleFileSelect = (file: FileItem) => {
     console.log('Selected file:', file);
   };
 
-  useEffect(() => {
-    const storedColumns = localStorage.getItem("columns");
-    if (storedColumns) {
-      setColumns(JSON.parse(storedColumns));
-    }
+  const [projects, setProjects] = useState<Projects>({});
+  const [activeProjectId, setActiveProjectId] = useState<string>("project1");
+  const [columns, setColumns] = useState<Column[]>([]);
+  const [files, setFiles] = useState<FileItem[]>([]);
 
-    const storedFiles = localStorage.getItem("files");
-    if (storedFiles) {
-      setFiles(JSON.parse(storedFiles));
+  // Load columns when switching projects
+  useEffect(() => {
+    if (projects[activeProjectId]) {
+      setColumns(projects[activeProjectId].columns);
+    } else {
+      setColumns([]);
+    }
+  }, [activeProjectId]); // ✅ only depends on activeProjectId, not projects
+
+  // Save columns back into active project
+  useEffect(() => {
+    setProjects(prev => {
+      const currentProject = prev[activeProjectId];
+      if (!currentProject) return prev; // safety check
+
+      return {
+        ...prev,
+        [activeProjectId]: {
+          ...currentProject,  // keep id, title, isActive, isNew
+          columns,            // update columns only
+        },
+      };
+    });
+  }, [columns, activeProjectId]);
+
+  // Load projects from localStorage once on mount
+  useEffect(() => {
+    const storedProjects = localStorage.getItem("projects");
+    if (storedProjects) {
+      const parsed = JSON.parse(storedProjects) as Projects;
+      setProjects(parsed);
+      if (parsed["project1"]) {
+        setColumns(parsed["project1"].columns);
+      }
     }
   }, []);
 
-  // Save changes to localStorage
+  // Save projects to localStorage
   useEffect(() => {
-    localStorage.setItem("columns", JSON.stringify(columns));
-  }, [columns]);
-
-  useEffect(() => {
-    localStorage.setItem("files", JSON.stringify(files));
-  }, [files]);
+    localStorage.setItem("projects", JSON.stringify(projects));
+  }, [projects]);
 
   const handlers = trelloHandlers({
     columns,
@@ -160,59 +192,7 @@ export default function SimplePage() {
       setColumns(finalColumns);
     }
   };
-
-  const updateCard = (updatedCard: Card) => {
-    setColumns((prevColumns) =>
-      prevColumns.map((col) => ({
-        ...col,
-        cards: col.cards.map((card) =>
-          card.id === updatedCard.id ? updatedCard : card
-        ),
-      }))
-    );
-
-    // Also update the selectedCard state
-    setSelectedCard(updatedCard);
-  };
-
-  const reorderChecklist = (startIndex: number, endIndex: number) => {
-    if (!selectedCard) return;
-
-    const updatedChecklist = Array.from(selectedCard.checklist ?? []);
-    const [moved] = updatedChecklist.splice(startIndex, 1);
-    updatedChecklist.splice(endIndex, 0, moved);
-
-    updateCard({
-      ...selectedCard,
-      checklist: updatedChecklist,
-    });
-  };
-
-  const onDragEnd = (result: DropResult) => {
-    if (!result.destination || !selectedCard) return;
-
-    reorderChecklist(result.source.index, result.destination.index);
-  };
-
-  // Reorder checklist items inside a specific card
-  const reorderChecklistInCard = (cardId: string, start: number, end: number) => {
-    setColumns((prevCols) =>
-      prevCols.map((col) => ({
-        ...col,
-        cards: col.cards.map((c) => {
-          if (c.id !== cardId) return c;
-
-          // If checklist is undefined, default to empty array
-          const updated = Array.from(c.checklist ?? []);
-          const [moved] = updated.splice(start, 1);
-          updated.splice(end, 0, moved);
-
-          return { ...c, checklist: updated };
-        }),
-      }))
-    );
-  };
-
+  
   // Toggle checklist item completed
   const toggleChecklistItem = (cardId: string, index: number) => {
     setColumns((prevCols) =>
@@ -239,7 +219,12 @@ export default function SimplePage() {
 
   return (
     <div>
-      <ChromeTabs />
+      <ChromeTabs
+        projects={projects}
+        setProjects={setProjects}
+        activeProjectId={activeProjectId}
+        setActiveProjectId={setActiveProjectId}
+      />
       <div className="flex h-full bg-gray-100 overflow-x-hidden">
         <FileExplorerSidebar
           data={files}
@@ -252,8 +237,7 @@ export default function SimplePage() {
 
         <TrelloBoards
           columns={columns}
-          newCardTexts={newCardTexts}
-          setNewCardTexts={setNewCardTexts}
+          setColumns={setColumns}
           newColumnTitle={newColumnTitle}
           setNewColumnTitle={setNewColumnTitle}
           isAddingColumn={isAddingColumn}
@@ -264,171 +248,28 @@ export default function SimplePage() {
           addColumn={handlers.addColumn}
           deleteColumn={handlers.deleteColumn}
           onCardClick={handlers.openCardModal}
-          reorderChecklistInCard={reorderChecklistInCard}
           toggleChecklistItem={toggleChecklistItem}
-          addChecklistItem={handlers.addChecklistItem}
           addChecklistItemInCard={handlers.addChecklistItemInCard}
           deleteChecklistItem={handlers.deleteChecklistItem}
-          newChecklistItem={newChecklistItem}
-          setNewChecklistItem={setNewChecklistItem}
           editChecklistItem={handlers.editChecklistItem}
         />
       </div>
       {selectedCard && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={handlers.closeCardModal}
-        >
-          <div
-            className="bg-white p-6 rounded-lg shadow-lg w-96 max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-xl font-semibold mb-4">Card Details</h2>
-
-            <div className="mb-4">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handlers.saveCardEdit(); // call your save handler
-                      setIsEditing(false);     // exit edit mode
-                    }
-                  }}
-                  className="w-full border rounded p-2"
-                  autoFocus
-                />
-              ) : (
-                <p
-                  className="text-lg font-semibold cursor-pointer"
-                  onClick={() => {
-                    setEditText(selectedCard.content); // initialize input
-                    setIsEditing(true);
-                  }}
-                >
-                  {selectedCard.content}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-1">Description</h3>
-              <textarea
-                className="w-full border rounded p-2"
-                rows={3}
-                value={selectedCard?.description || ""}
-                onChange={(e) => handlers.handleDescriptionChange(e.target.value)}
-              />
-            </div>
-
-            {/* Checklist with DnD */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Checklist</h3>
-
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="checklist">
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {selectedCard?.checklist?.map((item, idx) => (
-                        <Draggable key={idx.toString()} draggableId={idx.toString()} index={idx}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`flex items-center gap-2 mb-1 p-2 rounded border ${
-                                snapshot.isDragging ? "bg-blue-50 border-blue-400" : "bg-white"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={item.completed}
-                                onChange={() => handlers.toggleChecklistItem(idx)}
-                              />
-                              {editingChecklistItem?.cardId === selectedCard.id && editingChecklistItem.index === idx ? (
-                                <input
-                                  type="text"
-                                  value={item.text}
-                                  onChange={(e) => {
-                                    const newText = e.target.value;
-                                    setColumns((prevColumns) =>
-                                      prevColumns.map((col) => ({
-                                        ...col,
-                                        cards: col.cards.map((c) => {
-                                          if (c.id === selectedCard.id) {
-                                            console.log(c)
-                                            const updatedChecklist = [...(c.checklist ?? [])];
-                                            updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
-                                            return { ...c, checklist: updatedChecklist };
-                                          }
-                                          return c;
-                                        }),
-                                      }))
-                                    );
-                                    setSelectedCard((prev) => {
-                                      if (!prev) return prev;
-                                      const updatedChecklist = [...(prev.checklist ?? [])];
-                                      updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
-                                      return { ...prev, checklist: updatedChecklist };
-                                    });
-                                  }}
-                                  onBlur={() => setEditingChecklistItem(null)}
-                                  onKeyDown={(e) => e.key === "Enter" && setEditingChecklistItem(null)}
-                                  autoFocus
-                                  className={`flex-1 border rounded p-1 ${
-                                    item.completed ? "line-through text-gray-400" : ""
-                                  }`}
-                                />
-                              ) : (
-                                <span className={item.completed ? "line-through text-gray-400" : ""} onClick={() => {
-                                  setEditingChecklistItem({ cardId: selectedCard.id, index: idx });
-                                }}>
-                                  {item.text}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-
-              {/* Add new checklist item */}
-              <div className="flex gap-2 mt-2">
-                <input
-                  type="text"
-                  placeholder="New item..."
-                  className="flex-1 border rounded p-2"
-                  value={newChecklistItem}
-                  onChange={(e) => setNewChecklistItem(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handlers.addChecklistItem(newChecklistItem);
-                      setNewChecklistItem("");
-                    }
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    handlers.addChecklistItem(newChecklistItem);
-                    setNewChecklistItem("");
-                  }}
-                  className="px-3 bg-blue-500 text-white rounded"
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-
-            {/* Actions ... */}
-          </div>
-        </div>
+        <CardModal
+          selectedCard={selectedCard}
+          setSelectedCard={setSelectedCard}
+          closeCardModal={handlers.closeCardModal}
+          setColumns={setColumns}
+          editingChecklistItem={editingChecklistItem}
+          setEditingChecklistItem={setEditingChecklistItem}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          editText={editText}
+          setEditText={setEditText}
+          handleDescriptionChange={handlers.handleDescriptionChange}
+          toggleChecklistItem={handlers.toggleChecklistItem}
+          addChecklistItem={handlers.addChecklistItem}
+        />
       )}
     </div>
   );

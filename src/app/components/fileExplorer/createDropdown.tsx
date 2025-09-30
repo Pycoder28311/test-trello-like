@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CreateDropdownProps } from '../types/file-explorer';
+import { CreateDropdownProps } from '../types/fileExplorer';
 
 const CreateDropdown: React.FC<CreateDropdownProps> = ({ 
   onAddItem, 

@@ -2,9 +2,9 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FileItem, FileExplorerProps } from '../types/file-explorer';
-import FileExplorerNode from '../file-explorer/file-explorer-node';
-import CreateDropdown from '../file-explorer/create-dropdown';
+import { FileItem, FileExplorerProps } from '../types/fileExplorer';
+import FileExplorerNode from './fileExplorerNode';
+import CreateDropdown from './createDropdown';
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
@@ -124,7 +124,7 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
 
   return (
     <div
-      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative"
+      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative hidden"
       style={{ width }}
     >
       {/* Resizer */}
