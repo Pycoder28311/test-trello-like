@@ -3,15 +3,12 @@ import { Project, Projects } from '../types/tabsAndTrello';
 interface ChromeTabsHandlersProps {
   projects: Projects;
   setProjects: React.Dispatch<React.SetStateAction<Projects>>;
-  setActiveProjectId: React.Dispatch<React.SetStateAction<string>>;
-  isDragging: boolean;
-  setIsDragging: React.Dispatch<React.SetStateAction<boolean>>;
-  dragIndex: number | null;          // ✅ add current drag index
+  setActiveProjectId: React.Dispatch<React.SetStateAction<string>>;       // ✅ add current drag index
   setDragIndex: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
-  const { projects, setProjects, dragIndex, setDragIndex, setIsDragging, setActiveProjectId } = props;
+  const { projects, setProjects, setActiveProjectId } = props;
 
   const handleProjectNameChange = (projectId: string, value: string) => {
       setProjects(prevProjects => ({
@@ -75,34 +72,6 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
     });
   };
 
-  const handleDragStart = (index: number) => {
-    setIsDragging(true);
-    setDragIndex(index);
-  };
-
-  const handleProjectDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (dragIndex === null || dragIndex === index) return;
-
-    setProjects(prev => {
-      const entries = Object.entries(prev);
-      const dragged = entries[dragIndex];
-
-      entries.splice(dragIndex, 1);
-      entries.splice(index, 0, dragged);
-
-      const updated = entries.map(([id, proj], i) => [id, { ...proj, position: i }]);
-      return Object.fromEntries(updated);
-    });
-
-    setDragIndex(index);
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    setDragIndex(null);
-  };
-
   const createProject = (name?: string) => {
     const newId = `project${Date.now()}`;
     if (projects[newId]) return;
@@ -132,9 +101,6 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
     handleProjectNameChange,
     handleProjectInputKeyDown,
     closeProject,
-    handleDragStart,
-    handleProjectDragOver,
-    handleDragEnd,
     createProject,
   };
 }

@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction } from "react";
 import { Project, Projects } from "../types/tabsAndTrello";
 import { X } from "lucide-react";
+import { useState } from "react";
 
 interface TabProjectProps {
   project: Project;
@@ -12,6 +13,7 @@ interface TabProjectProps {
   dragIndex: number | null;
   handlers: ReturnType<typeof import("./tabHandlers").chromeTabsHandlers>;
   setActiveProjectId: Dispatch<SetStateAction<string>>;
+  inputRef?: (el: HTMLInputElement | null) => void;
 }
 
 const TabItem: React.FC<TabProjectProps> = ({
@@ -28,12 +30,24 @@ const TabItem: React.FC<TabProjectProps> = ({
   const isActive = id === activeProjectId;
   const isNew = project.isNew || false;
 
+  const [editing, setEditing] = useState(!!isNew);
+
+  const handleBlur = () => {
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setEditing(false);
+    } else if (e.key === "Escape") {
+      setEditing(false);
+    }
+    handlers.handleProjectInputKeyDown?.(id, e);
+  };
+
   return (
     <div
       draggable={!isNew}
-      onDragStart={() => handlers.handleDragStart(index)}
-      onDragOver={(e) => handlers.handleProjectDragOver(e, index)}
-      onDragEnd={handlers.handleDragEnd}
       onClick={() => !isNew && setActiveProjectId(id)}
       className={`
         group flex items-center min-w-[120px] max-w-[240px] h-8 
@@ -53,15 +67,26 @@ const TabItem: React.FC<TabProjectProps> = ({
       )}
 
       {/* Tab Title */}
-      <div className="flex-1 min-w-0 mx-1">
-        <input
-          type="text"
-          className="w-full bg-transparent outline-none text-sm px-1"
-          value={project.title || ''}
-          onChange={(e) => handlers.handleProjectNameChange(id, e.target.value)}
-          onKeyDown={(e) => handlers.handleProjectInputKeyDown(id, e)}
-          autoFocus={isNew}
-        />
+      <div className="mx-1" style={{ width: "160px" }}>
+        {editing ? (
+          <input
+            type="text"
+            className="w-full bg-transparent outline-none border-0 text-sm px-1 box-border"
+            value={project.title || ""}
+            onChange={(e) => handlers.handleProjectNameChange(id, e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            autoFocus
+          />
+        ) : (
+          <span
+            className="block w-full text-sm px-1 truncate cursor-text"
+            onClick={() => setEditing(true)}
+            title={project.title}
+          >
+            {project.title || "Untitled"}
+          </span>
+        )}
       </div>
 
       {/* Close Button */}
