@@ -70,6 +70,7 @@ export default function SimplePage() {
   // Load projects from localStorage once on mount
   useEffect(() => {
     const storedProjects = localStorage.getItem("projects");
+    console.log(storedProjects)
     if (storedProjects) {
       const parsed = JSON.parse(storedProjects) as Projects;
       setProjects(parsed);
