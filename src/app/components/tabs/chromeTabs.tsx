@@ -11,7 +11,7 @@ import {
   Droppable,
   Draggable,
   DropResult,
-  DragStart,
+  DraggableProvided,
 } from '@hello-pangea/dnd';
 
 const ChromeTabs: React.FC<ChromeTabsProps> = ({
@@ -51,7 +51,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
     setDragIndex: () => {},
   });
 
-  const onDragStart = (start: DragStart) => {
+  const onDragStart = () => {
     setIsDragging(true);
   };
 
@@ -76,7 +76,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
     setProjects(newProjects);
   };
 
-  const getItemStyle = (style: any) => {
+  const getItemStyle = (style: DraggableProvided['draggableProps']['style']) => {
     if (!style) return;
     const { transform, ...rest } = style;
 

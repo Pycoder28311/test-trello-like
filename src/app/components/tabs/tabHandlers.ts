@@ -40,37 +40,41 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
   };
 
   const closeProject = (projectId: string) => {
-    const confirmed = window.confirm("Are you sure you want to delete this project?");
-    if (!confirmed) return;
+  const confirmed = window.confirm("Are you sure you want to delete this project?");
+  if (!confirmed) return;
 
-    setProjects(prev => {
-      const { [projectId]: removed, ...remaining } = prev;
-      const remainingIds = Object.keys(remaining);
+  setProjects(prev => {
+    // Create new object excluding the deleted project
+    const remaining = Object.fromEntries(
+      Object.entries(prev).filter(([key]) => key !== projectId)
+    );
 
-      if (remainingIds.length === 0) {
-        const defaultId = "project1";
-        const defaultProject: Project = {
-          id: defaultId,
-          title: "Welcome",
-          columns: [],
-          isActive: true,
-          isNew: false,
-          position: 0,
-        };
-        setActiveProjectId(defaultId);
-        return { [defaultId]: defaultProject };
-      }
+    const remainingIds = Object.keys(remaining);
 
-      const wasActive = prev[projectId]?.isActive;
-      if (wasActive) {
-        const firstId = remainingIds[0];
-        remaining[firstId] = { ...remaining[firstId], isActive: true, isNew: false };
-        setTimeout(() => setActiveProjectId(firstId), 0);
-      }
+    if (remainingIds.length === 0) {
+      const defaultId = "project1";
+      const defaultProject: Project = {
+        id: defaultId,
+        title: "Welcome",
+        columns: [],
+        isActive: true,
+        isNew: false,
+        position: 0,
+      };
+      setActiveProjectId(defaultId);
+      return { [defaultId]: defaultProject };
+    }
 
-      return remaining;
-    });
-  };
+    const wasActive = prev[projectId]?.isActive;
+    if (wasActive) {
+      const firstId = remainingIds[0];
+      remaining[firstId] = { ...remaining[firstId], isActive: true, isNew: false };
+      setTimeout(() => setActiveProjectId(firstId), 0);
+    }
+
+    return remaining;
+  });
+};
 
   const createProject = (name?: string) => {
     const newId = `project${Date.now()}`;
