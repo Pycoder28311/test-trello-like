@@ -41,7 +41,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
       newValues[col.id] = inputValues[col.id] || "";
     });
     setInputValues(newValues);
-  }, [columns, inputValues]);
+  }, [columns]);
 
   const handleDragStart = (start: DragStart) => {
     if (start.type === "COLUMN" || start.type === "CARD" || start.type === "CHECKLIST") {
