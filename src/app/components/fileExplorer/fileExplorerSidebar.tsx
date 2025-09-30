@@ -124,7 +124,7 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
 
   return (
     <div
-      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative hidden"
+      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative"
       style={{ width }}
     >
       {/* Resizer */}
@@ -134,13 +134,13 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
       />
 
       {/* Header */}
-      <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+      <div className="p-4 border-b border-gray-700 flex justify-between items-center hidden">
         <h2 className="font-semibold text-lg">Explorer</h2>
         <CreateDropdown onAddItem={addItem} />
       </div>
 
       {/* File Tree */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 hidden">
         {data.map(item => (
           <FileExplorerNode
             key={item.id}
