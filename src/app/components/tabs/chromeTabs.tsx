@@ -23,8 +23,8 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [isDragging, setIsDragging] = useState(false);
   const tabsContainerRef = useRef<HTMLDivElement>(null);
-
   const ids = Object.keys(projects);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Focus input when a new tab is created
   useEffect(() => {
@@ -93,68 +93,151 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
     return { ...rest, transform };
   };
 
-  return (
-    <div className="flex items-center bg-gray-100 border-b border-gray-300">
-      <div
-        ref={tabsContainerRef}
-        className="flex-1 flex items-center overflow-x-auto overflow-y-hidden"
-        style={{ scrollbarWidth: 'thin' }}
-      >
-        <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <Droppable
-            droppableId="tabs"
-            direction="horizontal"
-          >
-            {(provided) => (
-              <div
-                className="flex items-center"
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                style={{
-                  maxWidth: '1000px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {ids.map((id, index) => (
-                  <Draggable draggableId={id} index={index} key={id}>
-                    {(dragProvided, snapshot) => (
-                      <div
-                        ref={dragProvided.innerRef}
-                        {...dragProvided.draggableProps}
-                        {...dragProvided.dragHandleProps}
-                        style={getItemStyle(dragProvided.draggableProps.style)}
-                        className={`mx-0.5 ${snapshot.isDragging ? 'opacity-70' : ''}`}
-                      >
-                        <TabItem
-                          id={id}
-                          index={index}
-                          project={projects[id]}
-                          projects={projects}
-                          activeProjectId={activeProjectId}
-                          isDragging={isDragging}
-                          dragIndex={null}
-                          handlers={handlers}
-                          setActiveProjectId={setActiveProjectId}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
+  const [listOne, setListOne] = useState(['a', 'b', 'c']);
+  const [listTwo, setListTwo] = useState(['x', 'y', 'z']);
 
-                {/* Add Tab Button */}
-                <button
-                  onClick={() => handlers.createProject?.('new project')}
-                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-300 mx-2 rounded flex-shrink-0"
-                  title="Add new tab"
+  return (
+    <div className="relative">
+      {/* Desktop Tabs */}
+      <div className="hidden md:flex items-center bg-gray-100 border-b border-gray-300">
+        <div
+          ref={tabsContainerRef}
+          className="flex-1 flex items-center overflow-x-auto overflow-y-hidden"
+          style={{ scrollbarWidth: 'thin' }}
+        >
+          <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+            <Droppable droppableId="tabs" direction="horizontal">
+              {(provided) => (
+                <div
+                  className="flex items-center"
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
                 >
-                  <Plus size={16} />
-                </button>
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                  {ids.map((id, index) => (
+                    <Draggable draggableId={id} index={index} key={id}>
+                      {(dragProvided, snapshot) => (
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                          style={getItemStyle(dragProvided.draggableProps.style)}
+                          className={`mx-0.5 ${snapshot.isDragging ? 'opacity-70' : ''}`}
+                        >
+                          <TabItem
+                            id={id}
+                            index={index}
+                            project={projects[id]}
+                            projects={projects}
+                            activeProjectId={activeProjectId}
+                            isDragging={isDragging}
+                            dragIndex={null}
+                            handlers={handlers}
+                            setActiveProjectId={setActiveProjectId}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+
+        <button
+          onClick={() => handlers.createProject?.('new project')}
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-300 mx-2 rounded flex-shrink-0"
+        >
+          <Plus size={16} />
+        </button>
       </div>
+
+      {/* Mobile Sidebar Toggle */}
+      <div className="md:hidden w-full bg-white flex items-center justify-between px-4 py-2 shadow">
+        {/* Optional left side content (logo, title, etc.) */}
+        <div className="flex items-center">
+          <h1 className="text-lg font-semibold">Projects</h1>
+        </div>
+
+        {/* Right side button */}
+        <div>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="flex flex-col justify-between w-8 h-6 relative focus:outline-none"
+          >
+            <span
+              className={`block h-0.5 w-full bg-gray-800 rounded transform transition duration-300 ease-in-out
+                ${isSidebarOpen ? 'rotate-45 translate-y-2' : ''}`}
+            ></span>
+            <span
+              className={`block h-0.5 w-full bg-gray-800 rounded transition-opacity duration-300 ease-in-out
+                ${isSidebarOpen ? 'opacity-0' : 'opacity-100'}`}
+            ></span>
+            <span
+              className={`block h-0.5 w-full bg-gray-800 rounded transform transition duration-300 ease-in-out
+                ${isSidebarOpen ? '-rotate-45 -translate-y-2' : ''}`}
+            ></span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-40 transform transition-transform duration-300
+          ${isSidebarOpen ? 'fixed' : 'hidden'}`}
+      >
+        <div className="flex flex-col p-4 gap-2">
+          <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+            {/* First vertical list */}
+            <Droppable droppableId="listOne" direction="vertical">
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col">
+                  {ids.map((id, index) => (
+                    <Draggable draggableId={id} index={index} key={id}>
+                      {(dragProvided, snapshot) => (
+                        <div
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          {...dragProvided.dragHandleProps}
+                          className={`mt-2 rounded ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                        >
+                          <TabItem
+                            id={id}
+                            index={ids.indexOf(id)}
+                            project={projects[id]}
+                            projects={projects}
+                            activeProjectId={activeProjectId}
+                            isDragging={false}
+                            dragIndex={null}
+                            handlers={handlers}
+                            setActiveProjectId={setActiveProjectId}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+          
+
+          <button
+            onClick={() => handlers.createProject?.('new project')}
+            className="mt-4 p-2 bg-gray-200 rounded hover:bg-gray-300"
+          >
+            Add Project
+          </button>
+        </div>
+      </div>
+      {/* Optional backdrop */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-black/50 z-30"
+        />
+      )}
     </div>
   );
 };

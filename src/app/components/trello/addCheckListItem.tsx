@@ -27,7 +27,7 @@ const ChecklistInput = ({ addChecklistItem }: ChecklistInputProps) => {
             handleAdd();
           }
         }}
-        className="flex-1 border rounded p-2"
+        className="flex-1 border rounded p-2 w-10"
       />
       <button
         onClick={handleAdd}

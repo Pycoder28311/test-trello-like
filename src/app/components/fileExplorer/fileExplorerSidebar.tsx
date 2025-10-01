@@ -124,7 +124,7 @@ const FileExplorerSidebar: React.FC<FileExplorerProps> = ({
 
   return (
     <div
-      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative"
+      className="h-screen bg-gray-900 text-white flex flex-col border-r border-gray-700 relative hidden"
       style={{ width }}
     >
       {/* Resizer */}

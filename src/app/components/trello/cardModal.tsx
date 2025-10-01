@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Card, Column } from "../types/tabsAndTrello"; // adjust paths
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
 interface CardModalProps {
   selectedCard: Card | null;
   setSelectedCard: React.Dispatch<React.SetStateAction<Card | null>>;
   closeCardModal: () => void;
+  columnId: string,
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>;
   editingChecklistItem: { cardId: string; index: number } | null;
   setEditingChecklistItem: React.Dispatch<React.SetStateAction<{ cardId: string; index: number } | null>>;
@@ -16,12 +17,15 @@ interface CardModalProps {
   handleDescriptionChange: (value: string) => void;
   toggleChecklistItem: (idx: number) => void;
   addChecklistItem: (text: string) => void;
+  updateCardTitle: (columnId: string, cardId: string, newTitle: string) => void;
+  handleDragEnd: (result: DropResult) => void;
 }
 
 const CardModal: React.FC<CardModalProps> = ({
   selectedCard,
   setSelectedCard,
   closeCardModal,
+  columnId,
   setColumns,
   editingChecklistItem,
   setEditingChecklistItem,
@@ -32,6 +36,8 @@ const CardModal: React.FC<CardModalProps> = ({
   handleDescriptionChange,
   toggleChecklistItem,
   addChecklistItem,
+  updateCardTitle,
+  handleDragEnd,
 }) => {
   const [newChecklistItem, setNewChecklistItem] = useState("");
 
@@ -56,7 +62,11 @@ const CardModal: React.FC<CardModalProps> = ({
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") setIsEditing(false);
+                if (e.key === "Enter") {
+                  // Call the function from parent to update the real card
+                  updateCardTitle(columnId, selectedCard.id, editText);
+                  setIsEditing(false);
+                }
               }}
               className="w-full border rounded p-2"
               autoFocus
@@ -69,7 +79,7 @@ const CardModal: React.FC<CardModalProps> = ({
                 setIsEditing(true);
               }}
             >
-              {selectedCard.content}
+              {editText}
             </p>
           )}
         </div>
@@ -88,8 +98,8 @@ const CardModal: React.FC<CardModalProps> = ({
         {/* Checklist */}
         <div className="mb-4">
           <h3 className="font-semibold mb-2">Checklist</h3>
-          <DragDropContext onDragEnd={() => {}}>
-            <Droppable droppableId="checklist">
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId={`checklist-${selectedCard.id}`} type="CHECKLIST">
               {(provided) => (
                 <div {...provided.droppableProps} ref={provided.innerRef}>
                   {selectedCard.checklist?.map((item, idx) => (

@@ -172,7 +172,6 @@ export default function SimplePage() {
       const finalColumns = newColumns.map((col) => ({
         ...col,
         cards: col.cards.map((c) => {
-          console.log(c.id,destCardId)
           if (c.id === destCardId && movedItem) {
             const updated = c.checklist ? [...c.checklist] : [];
 
@@ -182,7 +181,6 @@ export default function SimplePage() {
             } else {
               updated.splice(destination.index, 0, movedItem);
             }
-
             return { ...c, checklist: updated };
           }
           return c;
@@ -190,6 +188,17 @@ export default function SimplePage() {
       }));
 
       setColumns(finalColumns);
+
+      if (selectedCard) 
+      if (selectedCard.id === destCardId) {
+        const updatedChecklist = finalColumns
+          .find(col => col.cards.some(c => c.id === selectedCard.id))
+          ?.cards.find(c => c.id === selectedCard.id)?.checklist;
+
+        if (updatedChecklist) {
+          setSelectedCard({ ...selectedCard, checklist: updatedChecklist });
+        }
+      }
     }
   };
   
@@ -225,7 +234,7 @@ export default function SimplePage() {
         activeProjectId={activeProjectId}
         setActiveProjectId={setActiveProjectId}
       />
-      <div className="flex h-full bg-gray-100 overflow-x-hidden">
+      <div className="flex h-[calc(100vh-2rem)] bg-gray-100 overflow-x-auto overflow-y-hidden">
         <FileExplorerSidebar
           data={files}
           onUpdate={setFiles}
@@ -258,6 +267,7 @@ export default function SimplePage() {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
           closeCardModal={handlers.closeCardModal}
+          columnId={columns.find(col => col.cards.some(card => card.id === selectedCard.id))?.id || ""}
           setColumns={setColumns}
           editingChecklistItem={editingChecklistItem}
           setEditingChecklistItem={setEditingChecklistItem}
@@ -268,6 +278,8 @@ export default function SimplePage() {
           handleDescriptionChange={handlers.handleDescriptionChange}
           toggleChecklistItem={handlers.toggleChecklistItem}
           addChecklistItem={handlers.addChecklistItem}
+          updateCardTitle={handlers.updateCardTitle}
+          handleDragEnd={handleDragEnd}
         />
       )}
     </div>

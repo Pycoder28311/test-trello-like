@@ -63,7 +63,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
 
   return (
     <ScrollContainer
-      className="p-8 flex cursor-grab"
+      className="p-8 flex cursor-grab overflow-x-hidden"
       hideScrollbars={false}
       horizontal={!isDraggingItem}
       ignoreElements='input' // <-- This is the key

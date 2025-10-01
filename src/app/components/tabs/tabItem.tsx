@@ -50,7 +50,7 @@ const TabItem: React.FC<TabProjectProps> = ({
       draggable={!isNew}
       onClick={() => !isNew && setActiveProjectId(id)}
       className={`
-        group flex items-center min-w-[10px] max-w-[240px] h-8 
+        group flex items-center min-w-[10px] max-w-[240px] h-12 md:h-8
         border border-gray-300 border-b-0 relative
         ${isActive ? 'bg-white border-gray-300 z-10' : 'bg-gray-200 border-transparent hover:bg-gray-300'}
         ${isNew ? 'min-w-[200px] z-20' : ''}
@@ -61,7 +61,7 @@ const TabItem: React.FC<TabProjectProps> = ({
     >
       {/* Favicon */}
       {!isNew && (
-        <div className="ml-2 mr-2 text-sm w-4 h-4 flex items-center justify-center">
+        <div className="ml-2 mr-2 text-lg md:text-sm w-6 md:w-4 h-6 md:h-4 flex items-center justify-center">
           {project.favicon}
         </div>
       )}
@@ -71,7 +71,7 @@ const TabItem: React.FC<TabProjectProps> = ({
         {editing ? (
           <input
             type="text"
-            className="w-full bg-transparent outline-none border-0 text-sm px-1 box-border"
+            className="w-full bg-transparent outline-none border-0 text-lg md:text-sm px-1 box-border"
             value={project.title || ""}
             onChange={(e) => handlers.handleProjectNameChange(id, e.target.value)}
             onKeyDown={handleKeyDown}
@@ -80,7 +80,7 @@ const TabItem: React.FC<TabProjectProps> = ({
           />
         ) : (
           <span
-            className="block text-sm px-1 truncate cursor-text"
+            className="block text-lg md:text-sm px-1 truncate cursor-text"
             onClick={() => setEditing(true)}
             title={project.title}
           >

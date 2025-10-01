@@ -144,6 +144,23 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     });
   };
 
+  // Parent component (Columns container)
+  const updateCardTitle = (columnId: string, cardId: string, newTitle: string) => {
+    if (columnId == "") return;
+    setColumns((prevColumns) =>
+      prevColumns.map((col) =>
+        col.id === columnId
+          ? {
+              ...col,
+              cards: col.cards.map((card) =>
+                card.id === cardId ? { ...card, content: newTitle } : card
+              ),
+            }
+          : col
+      )
+    );
+  };
+
   return {
     openCardModal,
     closeCardModal,
@@ -158,5 +175,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     deleteColumn,
     deleteChecklistItem,
     editChecklistItem,
+    updateCardTitle,
   };
 };
