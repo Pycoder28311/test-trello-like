@@ -6,24 +6,10 @@ import FileExplorerSidebar from './components/fileExplorer/fileExplorerSidebar';
 import { FileItem } from './components/types/fileExplorer';
 import TrelloBoards from './components/trello/trelloBoards';
 import ChromeTabs from './components/tabs/chromeTabs';
-import { Card, Column, ChecklistItem } from './components/types/tabsAndTrello';
+import { Card, Column, ChecklistItem, Projects, User } from './components/types/tabsAndTrello';
 import { trelloHandlers } from "./components/trello/trelloHandlers";
 import { DropResult } from "@hello-pangea/dnd";
 import CardModal from './components/trello/cardModal';
-
-export interface Project {
-  id: string;          // unique project ID
-  title: string;       // project name (shown on the tab)
-  isActive: boolean;   // whether this project is currently active
-  isNew: boolean;      // flag for newly created projects needing naming
-  columns: Column[];   // the columns belonging to this project
-  favicon?: string;
-  position: number;
-}
-
-type Projects = {
-  [key: string]: Project;
-};
 
 export default function SimplePage() {
 
@@ -41,6 +27,7 @@ export default function SimplePage() {
   const [activeProjectId, setActiveProjectId] = useState<string>("project1");
   const [columns, setColumns] = useState<Column[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [user, setUser] = useState<User>();
 
   // Load columns when switching projects
   useEffect(() => {
@@ -84,6 +71,24 @@ export default function SimplePage() {
     localStorage.setItem("projects", JSON.stringify(projects));
   }, [projects]);
 
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/session");
+        if (!response.ok) throw new Error("Failed to fetch session data");
+
+        const session = await response.json();
+        if (session?.user) {
+          setUser(session.user);
+        }
+      } catch (error) {
+        console.error("Error fetching session:", error);
+      }
+    };
+
+    fetchSession();
+  }, []);
+
   const handlers = trelloHandlers({
     columns,
     setColumns,
@@ -95,6 +100,7 @@ export default function SimplePage() {
     editText,
     setEditText,
     setIsEditing,
+    activeProjectId,
   });
 
   const handleDragEnd = (result: DropResult) => {
@@ -233,6 +239,7 @@ export default function SimplePage() {
         setProjects={setProjects}
         activeProjectId={activeProjectId}
         setActiveProjectId={setActiveProjectId}
+        user={user || null}
       />
       <div className="flex h-[calc(100vh-2rem)] bg-gray-100 overflow-x-auto overflow-y-hidden">
         <FileExplorerSidebar

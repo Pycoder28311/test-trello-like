@@ -40,41 +40,41 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
   };
 
   const closeProject = (projectId: string) => {
-  const confirmed = window.confirm("Are you sure you want to delete this project?");
-  if (!confirmed) return;
+    const confirmed = window.confirm("Are you sure you want to delete this project?");
+    if (!confirmed) return;
 
-  setProjects(prev => {
-    // Create new object excluding the deleted project
-    const remaining = Object.fromEntries(
-      Object.entries(prev).filter(([key]) => key !== projectId)
-    );
+    setProjects(prev => {
+      // Create new object excluding the deleted project
+      const remaining = Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== projectId)
+      );
 
-    const remainingIds = Object.keys(remaining);
+      const remainingIds = Object.keys(remaining);
 
-    if (remainingIds.length === 0) {
-      const defaultId = "project1";
-      const defaultProject: Project = {
-        id: defaultId,
-        title: "Welcome",
-        columns: [],
-        isActive: true,
-        isNew: false,
-        position: 0,
-      };
-      setActiveProjectId(defaultId);
-      return { [defaultId]: defaultProject };
-    }
+      if (remainingIds.length === 0) {
+        const defaultId = "project1";
+        const defaultProject: Project = {
+          id: defaultId,
+          title: "Welcome",
+          columns: [],
+          isActive: true,
+          isNew: false,
+          position: 0,
+        };
+        setActiveProjectId(defaultId);
+        return { [defaultId]: defaultProject };
+      }
 
-    const wasActive = prev[projectId]?.isActive;
-    if (wasActive) {
-      const firstId = remainingIds[0];
-      remaining[firstId] = { ...remaining[firstId], isActive: true, isNew: false };
-      setTimeout(() => setActiveProjectId(firstId), 0);
-    }
+      const wasActive = prev[projectId]?.isActive;
+      if (wasActive) {
+        const firstId = remainingIds[0];
+        remaining[firstId] = { ...remaining[firstId], isActive: true, isNew: false };
+        setTimeout(() => setActiveProjectId(firstId), 0);
+      }
 
-    return remaining;
-  });
-};
+      return remaining;
+    });
+  };
 
   const createProject = (name?: string) => {
     const newId = `project${Date.now()}`;

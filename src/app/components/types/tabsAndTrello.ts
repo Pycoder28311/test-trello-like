@@ -34,6 +34,14 @@ export interface Projects {
   [key: string]: Project;
 };
 
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  password?: string; // optional because you might not send it to frontend
+  createdAt: string; // Date as ISO string
+}
+
 export interface ChromeTabsProps {
   projects: Projects;
   setProjects: React.Dispatch<React.SetStateAction<Projects>>;
@@ -41,6 +49,7 @@ export interface ChromeTabsProps {
   setActiveProjectId: React.Dispatch<React.SetStateAction<string>>;
   renameProject?: (id: string, title: string) => void; // optional
   closeProject?: (id: string) => void; // optional
+  user: User | null;
 }
 
 export interface TrelloBoardsProps {
@@ -73,4 +82,5 @@ export interface TrelloHandlersProps {
   editText: string;
   setEditText: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  activeProjectId: string;
 }

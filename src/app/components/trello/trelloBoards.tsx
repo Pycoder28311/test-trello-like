@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect,useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, DropResult, DragStart } from "@hello-pangea/dnd";
 import { TrelloBoardsProps } from '../types/tabsAndTrello';
 import ScrollContainer from "react-indiana-drag-scroll";

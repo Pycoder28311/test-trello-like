@@ -32,8 +32,44 @@ const TabItem: React.FC<TabProjectProps> = ({
 
   const [editing, setEditing] = useState(!!isNew);
 
+  const saveProject = async (project: Project) => {
+    try {
+      let res: Response;
+
+      if (project.isNew) {
+        // Add new project
+        res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: project.id,
+            title: project.title,
+            position: Object.keys(projects).length,
+            favicon: project.favicon || null,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Failed to create project");
+
+      } else {
+        // Edit existing project
+        res = await fetch(`/api/projects/${project.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: project.title }),
+        });
+
+        if (!res.ok) throw new Error("Failed to save project");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleBlur = () => {
     setEditing(false);
+    saveProject(project);
+    console.log(project.id)
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

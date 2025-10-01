@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { ChromeTabsProps } from '../types/tabsAndTrello';
 import { chromeTabsHandlers } from './tabHandlers';
 import TabItem from './tabItem';
+import Link from 'next/link';
 
 import {
   DragDropContext,
@@ -19,6 +20,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
   setProjects,
   activeProjectId,
   setActiveProjectId,
+  user,
 }) => {
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [isDragging, setIsDragging] = useState(false);
@@ -93,9 +95,6 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
     return { ...rest, transform };
   };
 
-  const [listOne, setListOne] = useState(['a', 'b', 'c']);
-  const [listTwo, setListTwo] = useState(['x', 'y', 'z']);
-
   return (
     <div className="relative">
       {/* Desktop Tabs */}
@@ -151,6 +150,11 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
         >
           <Plus size={16} />
         </button>
+        {user ? (
+          <Link href="/auth/signout">Sign out</Link>
+        ) : (
+          <Link href="/auth/signup">Connect</Link>
+        )}
       </div>
 
       {/* Mobile Sidebar Toggle */}
@@ -229,6 +233,11 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
           >
             Add Project
           </button>
+          {user ? (
+            <Link href="/auth/signout">Sign out</Link>
+          ) : (
+            <Link href="/auth/signup">Connect</Link>
+          )}
         </div>
       </div>
       {/* Optional backdrop */}

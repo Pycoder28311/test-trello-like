@@ -82,7 +82,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
+    return pathname?.startsWith(href);
   };
 
   const hasActiveChild = (item: SidebarItem): boolean => {
