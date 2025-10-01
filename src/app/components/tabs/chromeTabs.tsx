@@ -110,6 +110,10 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                 className="flex items-center"
                 ref={provided.innerRef}
                 {...provided.droppableProps}
+                style={{
+                  maxWidth: '1000px',
+                  whiteSpace: 'nowrap',
+                }}
               >
                 {ids.map((id, index) => (
                   <Draggable draggableId={id} index={index} key={id}>
@@ -119,7 +123,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                         {...dragProvided.draggableProps}
                         {...dragProvided.dragHandleProps}
                         style={getItemStyle(dragProvided.draggableProps.style)}
-                        className={`mx-1 ${snapshot.isDragging ? 'opacity-70' : ''}`}
+                        className={`mx-0.5 ${snapshot.isDragging ? 'opacity-70' : ''}`}
                       >
                         <TabItem
                           id={id}

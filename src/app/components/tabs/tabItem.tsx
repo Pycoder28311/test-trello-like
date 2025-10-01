@@ -50,7 +50,7 @@ const TabItem: React.FC<TabProjectProps> = ({
       draggable={!isNew}
       onClick={() => !isNew && setActiveProjectId(id)}
       className={`
-        group flex items-center min-w-[120px] max-w-[240px] h-8 
+        group flex items-center min-w-[10px] max-w-[240px] h-8 
         border border-gray-300 border-b-0 relative
         ${isActive ? 'bg-white border-gray-300 z-10' : 'bg-gray-200 border-transparent hover:bg-gray-300'}
         ${isNew ? 'min-w-[200px] z-20' : ''}
@@ -67,7 +67,7 @@ const TabItem: React.FC<TabProjectProps> = ({
       )}
 
       {/* Tab Title */}
-      <div className="mx-1" style={{ width: "160px" }}>
+      <div className="mx-1 flex-1 min-w-[10px] max-w-full">
         {editing ? (
           <input
             type="text"
@@ -80,7 +80,7 @@ const TabItem: React.FC<TabProjectProps> = ({
           />
         ) : (
           <span
-            className="block w-full text-sm px-1 truncate cursor-text"
+            className="block text-sm px-1 truncate cursor-text"
             onClick={() => setEditing(true)}
             title={project.title}
           >

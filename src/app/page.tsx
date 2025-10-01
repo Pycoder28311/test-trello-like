@@ -234,7 +234,6 @@ export default function SimplePage() {
           onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
-
         <TrelloBoards
           columns={columns}
           setColumns={setColumns}

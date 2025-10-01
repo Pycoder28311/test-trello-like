@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useRef } from "react";
 import { DragDropContext, Droppable, DropResult, DragStart } from "@hello-pangea/dnd";
 import { TrelloBoardsProps } from '../types/tabsAndTrello';
 import ScrollContainer from "react-indiana-drag-scroll";
@@ -68,7 +68,10 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
       horizontal={!isDraggingItem}
       ignoreElements='input' // <-- This is the key
     >
-      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEndWrapper}>
+      <DragDropContext 
+        onDragStart={handleDragStart} 
+        onDragEnd={handleDragEndWrapper}
+      >
         <Droppable droppableId="columns" direction="horizontal" type="COLUMN">
           {(provided) => (
             <div
