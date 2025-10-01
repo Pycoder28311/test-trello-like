@@ -16,11 +16,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Count existing columns to assign default position
-    const columnCount = await prisma.column.count({
+    const columnCount = await prisma.boardColumn.count({
       where: { projectId },
     });
 
-    const column = await prisma.column.create({
+    const column = await prisma.boardColumn.create({
       data: {
         title: title || "New Column",
         projectId,

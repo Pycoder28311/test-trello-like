@@ -109,7 +109,11 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
   const addColumn = async () => {
     const title = newColumnTitle.trim();
     if (!title) return;
-    console.log(activeProjectId)
+
+    // Update local state with DB column
+    setColumns([...columns, { id: `col-${Date.now()}`, title, cards: [] }]);
+    setNewColumnTitle("");
+    setIsAddingColumn(false);
 
     try {
       // Call API to create column in DB
@@ -123,13 +127,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
       });
 
       if (!res.ok) throw new Error("Failed to create column");
-
-      const newColumn = await res.json();
-
-      // Update local state with DB column
-      setColumns((prev) => [...prev, { ...newColumn, cards: [] }]);
-      setNewColumnTitle("");
-      setIsAddingColumn(false);
     } catch (err) {
       console.error(err);
     }

@@ -59,30 +59,32 @@ model Project {
   favicon   String?  // optional
   position  Int
 
-  columns   Column[]
+  columns   BoardColumn[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Column {
-  id        String  @id @default(cuid())
+model BoardColumn {
+  id        String       @id @default(cuid())
   title     String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId String
   position  Int
 
   cards     Card[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("columns") // maps this model to table "columns" in MySQL
 }
 
 model Card {
   id          String         @id @default(cuid())
   content     String
   description String?        // optional
-  column      Column         @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  column      BoardColumn         @relation(fields: [columnId], references: [id], onDelete: Cascade)
   columnId    String
   position  Int
 

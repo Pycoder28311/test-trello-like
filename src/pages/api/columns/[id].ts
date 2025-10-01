@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Edit column
       const { title, position } = req.body;
 
-      const updatedColumn = await prisma.column.update({
+      const updatedColumn = await prisma.boardColumn.update({
         where: { id },
         data: {
           ...(title !== undefined ? { title } : {}),
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === "DELETE") {
       // Delete column
-      await prisma.column.delete({ where: { id } });
+      await prisma.boardColumn.delete({ where: { id } });
       return res.status(200).json({ message: "Column deleted" });
     }
 
