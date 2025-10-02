@@ -16,7 +16,7 @@ interface CardProps {
   setEditingChecklistItem: React.Dispatch<React.SetStateAction<{ cardId: string; index: number } | null>>;
   toggleChecklistItem: (cardId: string, idx: number) => void;
   editChecklistItem: (cardId: string, idx: number, newText: string) => void;
-  deleteChecklistItem: (cardId: string, idx: number) => void;
+  deleteChecklistItem: (cardId: string, idx: string) => void;
   addChecklistItemInCard: (card: Card, text: string) => void;
 }
 

@@ -69,7 +69,6 @@ const TabItem: React.FC<TabProjectProps> = ({
   const handleBlur = () => {
     setEditing(false);
     saveProject(project);
-    console.log(project.id)
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

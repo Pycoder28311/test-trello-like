@@ -1,6 +1,7 @@
 import { DropResult } from "@hello-pangea/dnd";
 
 export interface ChecklistItem {
+  id: string;
   text: string;
   completed: boolean;
 }
@@ -67,7 +68,7 @@ export interface TrelloBoardsProps {
   onCardClick: (card: Card) => void;
   toggleChecklistItem: (cardId: string, idx: number) => void;
   addChecklistItemInCard: (card: Card, text: string) => void;
-  deleteChecklistItem: (cardId: string, index: number) => void;
+  deleteChecklistItem: (cardId: string, index: string) => void;
   editChecklistItem: (cardId: string, index: number, newText: string) => void;
 }
 

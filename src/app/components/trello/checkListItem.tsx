@@ -10,7 +10,7 @@ interface ChecklistItemProps {
   setEditingChecklistItem: React.Dispatch<React.SetStateAction<{ cardId: string; index: number } | null>>;
   toggleChecklistItem: (cardId: string, idx: number) => void;
   editChecklistItem: (cardId: string, idx: number, newText: string) => void;
-  deleteChecklistItem: (cardId: string, idx: number) => void;
+  deleteChecklistItem: (cardId: string, idx: string) => void;
   provided: DraggableProvided; // from react-beautiful-dnd Draggable
   snapshot: DraggableStateSnapshot; // from react-beautiful-dnd Draggable
 }
@@ -64,7 +64,7 @@ const ChecklistItem: React.FC<ChecklistItemProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation(); // prevent dragging when clicking delete
-          deleteChecklistItem(card.id, index);
+          deleteChecklistItem(card.id, item.id);
         }}
         className="text-red-500 hover:text-red-700 font-bold"
       >

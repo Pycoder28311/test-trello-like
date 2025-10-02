@@ -39,12 +39,12 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
     }
   };
 
-  const closeProject = (projectId: string) => {
+  const closeProject = async (projectId: string) => {
     const confirmed = window.confirm("Are you sure you want to delete this project?");
     if (!confirmed) return;
-
+    
+    // 2️⃣ Update local state after successful deletion
     setProjects(prev => {
-      // Create new object excluding the deleted project
       const remaining = Object.fromEntries(
         Object.entries(prev).filter(([key]) => key !== projectId)
       );
@@ -74,6 +74,19 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
 
       return remaining;
     });
+
+    try {
+      // 1️⃣ Call API to delete project from DB
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Failed to delete project");
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete project. Please try again.");
+    }
   };
 
   const createProject = (name?: string) => {

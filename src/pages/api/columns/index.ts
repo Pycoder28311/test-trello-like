@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { projectId, title } = req.body;
+    const { id, projectId, title } = req.body;
 
     if (!projectId) {
       return res.status(400).json({ error: "projectId is required" });
@@ -22,6 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const column = await prisma.boardColumn.create({
       data: {
+        id,
         title: title || "New Column",
         projectId,
         position: columnCount,

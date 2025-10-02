@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { columnId, content, description } = req.body;
+    const { id, columnId, content, description } = req.body;
 
     if (!columnId || !content) {
       return res.status(400).json({ error: "columnId and content are required" });
@@ -20,6 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const card = await prisma.card.create({
       data: {
+        id,
         content,
         description,
         columnId,

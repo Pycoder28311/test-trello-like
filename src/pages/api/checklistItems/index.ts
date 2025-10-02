@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { cardId, text } = req.body;
+    const { id,cardId, text } = req.body;
 
     if (!cardId || !text) {
       return res.status(400).json({ error: "cardId and text are required" });
@@ -20,6 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const item = await prisma.checklistItem.create({
       data: {
+        id,
         cardId,
         text,
         completed: false,
