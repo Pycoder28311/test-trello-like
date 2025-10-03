@@ -45,7 +45,6 @@ export default function SimplePage() {
         if (!response.ok) throw new Error("Failed to fetch session data");
 
         const session = await response.json();
-        console.log(session)
         if (session?.user) {
           setUser(session.user);
           if (session.user.lastProjectId) {
@@ -84,7 +83,6 @@ export default function SimplePage() {
             } as Project,
           ])
         );
-        console.log(projects);
 
         setProjects(projects);
       } catch (err) {

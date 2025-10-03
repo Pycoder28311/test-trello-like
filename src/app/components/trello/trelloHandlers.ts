@@ -311,7 +311,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
         }),
       }))
     );
-    console.log(cardId,index,newText)
 
     // Optional: if you have selectedCard state, update it too
     setSelectedCard((prev) => {
@@ -325,7 +324,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
   // Parent component (Columns container)
   const updateCardTitle = (columnId: string, cardId: string, newTitle: string) => {
     if (columnId == "") return;
-    console.log(newTitle)
     setColumns((prevColumns) =>
       prevColumns.map((col) =>
         col.id === columnId

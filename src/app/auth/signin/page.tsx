@@ -3,7 +3,6 @@
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import styles from '../Auth.module.css';
-import { FcGoogle } from "react-icons/fc";
 
 export default function SignIn() {
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -85,43 +84,8 @@ export default function SignIn() {
         </form>
 
         <div className={styles.links}>
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/" })}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              gap: '6px',
-              padding: '10px 16px',
-              backgroundColor: '#646cff', // main color
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: 500,
-              borderRadius: '6px',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s, transform 0.1s',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#4f55e1';
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#646cff';
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
-            }}
-          >
-            <FcGoogle className="w-5 h-5" />
-            Σύνδεση με Google
-          </button>
-
           <Link href="/auth/signup" className={styles.link}>
             Δεν έχετε λογαριασμό; <span>Εγγραφή</span>
-          </Link>
-
-          <Link href="/auth/email-reset-input" className={styles.link}>
-            Ξεχάσατε τον κωδικό;
           </Link>
         </div>
       </div>

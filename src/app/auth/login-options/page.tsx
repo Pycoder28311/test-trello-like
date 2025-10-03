@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { signIn } from "next-auth/react";
 import { UserPlus } from "lucide-react";
-import { FcGoogle } from "react-icons/fc";
 
 export default function AuthPage() {
   return (
@@ -27,38 +25,6 @@ export default function AuthPage() {
           <UserPlus className="w-5 h-5" />
           Εγγραφή με Email
         </Link>
-
-        {/* Google login button */}
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/" })}
-          style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              gap: '6px',
-              padding: '10px 16px',
-              backgroundColor: '#646cff',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: 500,
-              borderRadius: '6px',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s, transform 0.1s',
-            }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#4f55e1';
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#646cff';
-              (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
-            }}
-        >
-          <FcGoogle className="w-5 h-5" />
-          Σύνδεση με Google
-        </button>
       </div>
     </div>
   );
