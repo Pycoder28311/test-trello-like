@@ -30,14 +30,6 @@ export default function SimplePage() {
   const [user, setUser] = useState<User>();
 
   useEffect(() => {
-    if (projects[activeProjectId]) {
-      setColumns(projects[activeProjectId].columns);
-    } else {
-      setColumns([]);
-    }
-  }, [activeProjectId]); 
-
-  useEffect(() => {
     const init = async () => {
       try {
         // Fetch session
