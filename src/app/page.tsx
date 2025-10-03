@@ -84,7 +84,7 @@ export default function SimplePage() {
             } as Project,
           ])
         );
-        
+
         setProjects(projects);
       } catch (err) {
         console.error("Failed to load projects and columns:", err);
@@ -97,6 +97,13 @@ export default function SimplePage() {
   useEffect(() => {
     const fetchActiveProject = async () => {
       if (!activeProjectId || !user) return;
+
+      const activeProject = projects[activeProjectId];
+      if (!activeProject) {
+        // If it was deleted, just clear columns and stop
+        setColumns([]);
+        return;
+      }
 
       try {
         const activeProject = projects[activeProjectId];

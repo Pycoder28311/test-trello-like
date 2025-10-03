@@ -47,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === "DELETE") {
+      console.log(id)
       // Delete project
       await prisma.project.delete({ where: { id } });
       return res.status(200).json({ message: "Project deleted" });
