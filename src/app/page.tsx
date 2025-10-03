@@ -62,6 +62,7 @@ export default function SimplePage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
+        if (!user) return;
         // 1️⃣ Fetch projects
         const resProjects = await fetch("/api/projects/names");
         if (!resProjects.ok) throw new Error("Failed to fetch projects");
@@ -95,7 +96,7 @@ export default function SimplePage() {
 
   useEffect(() => {
     const fetchActiveProject = async () => {
-      if (!activeProjectId) return;
+      if (!activeProjectId || !user) return;
 
       try {
         const activeProject = projects[activeProjectId];
@@ -359,24 +360,26 @@ export default function SimplePage() {
           onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
-        <TrelloBoards
-          columns={columns}
-          setColumns={setColumns}
-          newColumnTitle={newColumnTitle}
-          setNewColumnTitle={setNewColumnTitle}
-          isAddingColumn={isAddingColumn}
-          setIsAddingColumn={setIsAddingColumn}
-          handleDragEnd={handleDragEnd}
-          addCard={handlers.addCard}
-          deleteCard={handlers.deleteCard}
-          addColumn={handlers.addColumn}
-          deleteColumn={handlers.deleteColumn}
-          onCardClick={handlers.openCardModal}
-          toggleChecklistItem={toggleChecklistItem}
-          addChecklistItemInCard={handlers.addChecklistItemInCard}
-          deleteChecklistItem={handlers.deleteChecklistItem}
-          editChecklistItem={handlers.editChecklistItem}
-        />
+        {user && (
+          <TrelloBoards
+            columns={columns}
+            setColumns={setColumns}
+            newColumnTitle={newColumnTitle}
+            setNewColumnTitle={setNewColumnTitle}
+            isAddingColumn={isAddingColumn}
+            setIsAddingColumn={setIsAddingColumn}
+            handleDragEnd={handleDragEnd}
+            addCard={handlers.addCard}
+            deleteCard={handlers.deleteCard}
+            addColumn={handlers.addColumn}
+            deleteColumn={handlers.deleteColumn}
+            onCardClick={handlers.openCardModal}
+            toggleChecklistItem={toggleChecklistItem}
+            addChecklistItemInCard={handlers.addChecklistItemInCard}
+            deleteChecklistItem={handlers.deleteChecklistItem}
+            editChecklistItem={handlers.editChecklistItem}
+          />
+        )}
       </div>
       {selectedCard && (
         <CardModal
