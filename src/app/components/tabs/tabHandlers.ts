@@ -61,7 +61,6 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
           isNew: false,
           position: 0,
         };
-        setActiveProjectId(defaultId);
         return { [defaultId]: defaultProject };
       }
 
