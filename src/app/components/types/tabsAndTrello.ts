@@ -51,6 +51,7 @@ export interface ChromeTabsProps {
   renameProject?: (id: string, title: string) => void; // optional
   closeProject?: (id: string) => void; // optional
   user: User | null;
+  updatePositions: (table: "checklistItem" | "card" | "boardColumn" | "project", parentId: string | null, positions: { id: string; position: number }[]) => void;
 }
 
 export interface TrelloBoardsProps {
@@ -66,7 +67,7 @@ export interface TrelloBoardsProps {
   addColumn: () => void;
   deleteColumn: (columnId: string) => void;
   onCardClick: (card: Card) => void;
-  toggleChecklistItem: (cardId: string, idx: number) => void;
+  toggleChecklistItem: (cardId: string, idx: string) => void;
   addChecklistItemInCard: (card: Card, text: string) => void;
   deleteChecklistItem: (cardId: string, index: string) => void;
   editChecklistItem: (cardId: string, index: number, newText: string) => void;

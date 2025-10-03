@@ -52,7 +52,7 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
       const remainingIds = Object.keys(remaining);
 
       if (remainingIds.length === 0) {
-        const defaultId = "project1";
+        const defaultId = remainingIds[0] || "";
         const defaultProject: Project = {
           id: defaultId,
           title: "Welcome",

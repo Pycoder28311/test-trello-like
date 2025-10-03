@@ -8,7 +8,7 @@ interface ChecklistItemProps {
   index: number;
   editingChecklistItem: { cardId: string; index: number } | null;
   setEditingChecklistItem: React.Dispatch<React.SetStateAction<{ cardId: string; index: number } | null>>;
-  toggleChecklistItem: (cardId: string, idx: number) => void;
+  toggleChecklistItem: (cardId: string, idx: string) => void;
   editChecklistItem: (cardId: string, idx: number, newText: string) => void;
   deleteChecklistItem: (cardId: string, idx: string) => void;
   provided: DraggableProvided; // from react-beautiful-dnd Draggable
@@ -27,6 +27,13 @@ const ChecklistItem: React.FC<ChecklistItemProps> = ({
   provided,
   snapshot,
 }) => {
+  const saveChecklist = async (id: string, text: string) => {
+    await fetch(`/api/checklistItems/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+  };
   return (
     <div
       ref={provided.innerRef}
@@ -39,7 +46,7 @@ const ChecklistItem: React.FC<ChecklistItemProps> = ({
       <input
         type="checkbox"
         checked={item.completed}
-        onChange={() => toggleChecklistItem(card.id, index)}
+        onChange={() => toggleChecklistItem(card.id, item.id)}
       />
 
       {editingChecklistItem?.cardId === card.id && editingChecklistItem.index === index ? (
@@ -47,8 +54,16 @@ const ChecklistItem: React.FC<ChecklistItemProps> = ({
           type="text"
           value={item.text}
           onChange={(e) => editChecklistItem(card.id, index, e.target.value)}
-          onBlur={() => setEditingChecklistItem(null)}
-          onKeyDown={(e) => e.key === "Enter" && setEditingChecklistItem(null)}
+          onBlur={async (e) => {
+            setEditingChecklistItem(null);
+            await saveChecklist(item.id, e.currentTarget.value); // latest input value
+          }}
+          onKeyDown={async (e) => {
+            if (e.key === "Enter") {
+              setEditingChecklistItem(null);
+              await saveChecklist(item.id, item.text);
+            }
+          }}
           autoFocus
           className="flex-1 border rounded p-1"
         />

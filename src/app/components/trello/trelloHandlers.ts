@@ -47,9 +47,18 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
 
   const handleDescriptionChange = (value: string) => {
     if (!selectedCard) return;
-    const updatedCard = { ...selectedCard, description: value };
-    setSelectedCard(updatedCard);
-    updateCard(updatedCard);
+
+    // Only update the description
+    setSelectedCard((prev) =>
+      prev ? { ...prev, description: value } : prev
+    );
+
+    // Update only the description in the board state
+    updateCard({
+      id: selectedCard.id,
+      content: editText,
+      description: value,
+    });
   };
 
   const toggleChecklistItem = (index: number) => {
@@ -67,14 +76,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     // Generate an ID for the checklist item
     const checklistId = `check-${Date.now()}`;
 
-    // 1️⃣ Update local state
-    const newChecklist = [
-      ...(selectedCard.checklist || []),
-      { id: checklistId, text, completed: false },
-    ];
-    const updatedCard = { ...selectedCard, checklist: newChecklist };
-    setSelectedCard(updatedCard);
-
     // 2️⃣ Call API to create checklist item in DB
     try {
       const res = await fetch("/api/checklistItems", {
@@ -90,14 +91,22 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
 
       if (!res.ok) throw new Error("Failed to add checklist item");
 
+      // 1️⃣ Update local state
+      const newChecklist = [
+        ...(selectedCard.checklist || []),
+        { id: checklistId, text, completed: false },
+      ];
+      const updatedCard = { ...selectedCard, checklist: newChecklist };
+      setSelectedCard(updatedCard);
+      // 3️⃣ Update card in local state if needed
+      updateCard(updatedCard);
+
       // Optionally, replace the frontend state with DB response
       // const newItem = await res.json();
     } catch (err) {
       console.error(err);
     }
 
-    // 3️⃣ Update card in local state if needed
-    updateCard(updatedCard);
   };
 
   const addChecklistItemInCard = async (card: Card, text: string) => {
@@ -105,12 +114,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
 
     // Generate frontend ID for checklist item
     const checklistId = `check-${Date.now()}`;
-
-    // 1️⃣ Update card locally
-    const newChecklist = [...(card.checklist || []), { id: checklistId, text, completed: false }];
-    const updatedCard = { ...card, checklist: newChecklist };
-    // 3️⃣ Update the card in your state
-    updateCard(updatedCard);
 
     // 2️⃣ Call API to create checklist item in DB
     try {
@@ -126,6 +129,12 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
       });
 
       if (!res.ok) throw new Error("Failed to add checklist item");
+
+      // 1️⃣ Update card locally
+      const newChecklist = [...(card.checklist || []), { id: checklistId, text, completed: false }];
+      const updatedCard = { ...card, checklist: newChecklist };
+      // 3️⃣ Update the card in your state
+      updateCard(updatedCard);
 
       // Optionally, you could replace local item with DB response
       // const newItem = await res.json();
@@ -152,6 +161,14 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
       }))
     );
 
+    if (selectedCard) {
+      setSelectedCard((prev) => {
+        if (!prev || prev.id !== cardId) return prev;
+        const updatedChecklist = (prev.checklist ?? []).filter(item => item.id !== checklistItemId);
+        return { ...prev, checklist: updatedChecklist };
+      });
+    }
+
     try {
       // 2️⃣ Call API to delete checklist item from DB
       const res = await fetch(`/api/checklistItems/${checklistItemId}`, {
@@ -172,14 +189,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     // Generate frontend ID for the card
     const cardId = `card-${Date.now()}`;
 
-    // 1️⃣ Update local state immediately
-    const newColumns = columns.map((col) =>
-      col.id === columnId
-        ? { ...col, cards: [...col.cards, { id: cardId, content: text, checklist: [] }] }
-        : col
-    );
-    setColumns(newColumns);
-
     try {
       // 2️⃣ Call API to create card in DB with the same ID
       const res = await fetch("/api/cards", {
@@ -193,6 +202,14 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
       });
 
       if (!res.ok) throw new Error("Failed to create card");
+
+      // 1️⃣ Update local state immediately
+      const newColumns = columns.map((col) =>
+        col.id === columnId
+          ? { ...col, cards: [...col.cards, { id: cardId, content: text, checklist: [] }] }
+          : col
+      );
+      setColumns(newColumns);
 
       // Optionally, you can replace local state with DB response
       // const newCard = await res.json();
@@ -234,11 +251,6 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
     // Generate ID on the frontend
     const columnId = `col-${Date.now()}`;
 
-    // 1️⃣ Update local state immediately
-    setColumns([...columns, { id: columnId, title, cards: [] }]);
-    setNewColumnTitle("");
-    setIsAddingColumn(false);
-
     try {
       // 2️⃣ Call API to create column in DB with the same ID
       const res = await fetch("/api/columns", {
@@ -252,6 +264,11 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
       });
 
       if (!res.ok) throw new Error("Failed to create column");
+
+      // 1️⃣ Update local state immediately
+      setColumns([...columns, { id: columnId, title, cards: [] }]);
+      setNewColumnTitle("");
+      setIsAddingColumn(false);
     } catch (err) {
       console.error(err);
     }
@@ -308,6 +325,7 @@ export const trelloHandlers = (props: TrelloHandlersProps) => {
   // Parent component (Columns container)
   const updateCardTitle = (columnId: string, cardId: string, newTitle: string) => {
     if (columnId == "") return;
+    console.log(newTitle)
     setColumns((prevColumns) =>
       prevColumns.map((col) =>
         col.id === columnId

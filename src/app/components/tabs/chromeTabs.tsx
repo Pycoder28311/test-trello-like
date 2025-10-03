@@ -21,6 +21,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
   activeProjectId,
   setActiveProjectId,
   user,
+  updatePositions,
 }) => {
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [isDragging, setIsDragging] = useState(false);
@@ -64,18 +65,21 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
     if (!destination) return;
     if (source.index === destination.index) return;
 
-    // reorder
+    // 1️⃣ Reorder project IDs
     const newIds = Array.from(ids);
     const [removed] = newIds.splice(source.index, 1);
     newIds.splice(destination.index, 0, removed);
 
-    // rebuild projects with new order
+    // 2️⃣ Rebuild projects object in new order
     const newProjects: typeof projects = {};
     newIds.forEach((id) => {
       newProjects[id] = projects[id];
     });
-
     setProjects(newProjects);
+
+    // 3️⃣ Update positions in backend
+    const positions = newIds.map((id, idx) => ({ id, position: idx }));
+    updatePositions("project", null, positions); // projects have no parent
   };
 
   const getItemStyle = (style: DraggableProvided['draggableProps']['style']) => {
@@ -132,6 +136,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                             dragIndex={null}
                             handlers={handlers}
                             setActiveProjectId={setActiveProjectId}
+                            user={user}
                           />
                         </div>
                       )}
@@ -215,6 +220,7 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                             dragIndex={null}
                             handlers={handlers}
                             setActiveProjectId={setActiveProjectId}
+                            user={user}
                           />
                         </div>
                       )}

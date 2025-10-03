@@ -6,7 +6,7 @@ import FileExplorerSidebar from './components/fileExplorer/fileExplorerSidebar';
 import { FileItem } from './components/types/fileExplorer';
 import TrelloBoards from './components/trello/trelloBoards';
 import ChromeTabs from './components/tabs/chromeTabs';
-import { Card, Column, ChecklistItem, Projects, User } from './components/types/tabsAndTrello';
+import { Card, Column, ChecklistItem, Projects, User, Project } from './components/types/tabsAndTrello';
 import { trelloHandlers } from "./components/trello/trelloHandlers";
 import { DropResult } from "@hello-pangea/dnd";
 import CardModal from './components/trello/cardModal';
@@ -24,7 +24,7 @@ export default function SimplePage() {
   };
 
   const [projects, setProjects] = useState<Projects>({});
-  const [activeProjectId, setActiveProjectId] = useState<string>("project1");
+  const [activeProjectId, setActiveProjectId] = useState<string>("");
   const [columns, setColumns] = useState<Column[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [user, setUser] = useState<User>();
@@ -36,40 +36,7 @@ export default function SimplePage() {
     } else {
       setColumns([]);
     }
-  }, [activeProjectId]); // ✅ only depends on activeProjectId, not projects
-
-  // Save columns back into active project
-  useEffect(() => {
-    setProjects(prev => {
-      const currentProject = prev[activeProjectId];
-      if (!currentProject) return prev; // safety check
-
-      return {
-        ...prev,
-        [activeProjectId]: {
-          ...currentProject,  // keep id, title, isActive, isNew
-          columns,            // update columns only
-        },
-      };
-    });
-  }, [columns, activeProjectId]);
-
-  // Load projects from localStorage once on mount
-  useEffect(() => {
-    const storedProjects = localStorage.getItem("projects");
-    if (storedProjects) {
-      const parsed = JSON.parse(storedProjects) as Projects;
-      setProjects(parsed);
-      if (parsed["project1"]) {
-        setColumns(parsed["project1"].columns);
-      }
-    }
-  }, []);
-
-  // Save projects to localStorage
-  useEffect(() => {
-    localStorage.setItem("projects", JSON.stringify(projects));
-  }, [projects]);
+  }, [activeProjectId]); 
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -80,6 +47,9 @@ export default function SimplePage() {
         const session = await response.json();
         if (session?.user) {
           setUser(session.user);
+          if (session.user.lastProjectId) {
+            setActiveProjectId(session.user.lastProjectId);
+          }
         }
       } catch (error) {
         console.error("Error fetching session:", error);
@@ -88,6 +58,91 @@ export default function SimplePage() {
 
     fetchSession();
   }, []);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        // 1️⃣ Fetch projects
+        const resProjects = await fetch("/api/projects/names");
+        if (!resProjects.ok) throw new Error("Failed to fetch projects");
+
+        const projectsArray: { id: string; title: string; position: number }[] = await resProjects.json();
+
+        // 2️⃣ Map into full Project type with defaults
+        const projects: Record<string, Project> = Object.fromEntries(
+          projectsArray.map(p => [
+            p.id,
+            {
+              id: p.id,
+              title: p.title,
+              position: p.position,
+              isActive: false,          // default
+              isNew: false,             // default
+              columns: [],              // default empty columns
+              favicon: undefined,       // default
+            } as Project,
+          ])
+        );
+        console.log(projects);
+
+        setProjects(projects);
+      } catch (err) {
+        console.error("Failed to load projects and columns:", err);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  useEffect(() => {
+    const fetchActiveProject = async () => {
+      if (!activeProjectId || !projects[activeProjectId] || projects[activeProjectId].isNew) return;
+
+      try {
+        const resActive = await fetch(`/api/projects/${activeProjectId}`);
+        if (!resActive.ok) throw new Error("Failed to fetch active project");
+
+        const activeProjectData = await resActive.json();
+
+        // Update columns for the active project
+        setColumns(activeProjectData.columns || []);
+
+        // Merge full active project into projects state
+        setProjects(prev => ({
+          ...prev,
+          [activeProjectData.id]: {
+            ...prev[activeProjectData.id],
+            ...activeProjectData,
+            isActive: true, // mark as active
+          },
+        }));
+      } catch (err) {
+        console.error("Failed to load active project:", err);
+      }
+    };
+
+    fetchActiveProject();
+  }, [activeProjectId]); // only when activeProjectId changes
+
+  useEffect(() => {
+    const fetchActiveProjectId = async () => {
+      if (!activeProjectId) return;
+
+      if (user?.id) {
+        try {
+          await fetch("/api/lastProject", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user.id, lastProjectId: activeProjectId }),
+          });
+        } catch (err) {
+          console.error("Failed to update lastProjectId:", err);
+        }
+      }
+    };
+
+    fetchActiveProjectId();
+  }, [activeProjectId]); // only when activeProjectId changes
 
   const handlers = trelloHandlers({
     columns,
@@ -103,6 +158,24 @@ export default function SimplePage() {
     activeProjectId,
   });
 
+  type PositionItem = { id: string; position: number };
+
+  const updatePositions = async (
+    table: "checklistItem" | "card" | "boardColumn" | "project",
+    parentId: string | null, // checklistItem -> cardId, card -> columnId, column -> projectId, project -> null
+    items: PositionItem[]
+  ) => {
+    try {
+      await fetch(`/api/updatePositions/${table}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ parentId, positions: items }),
+      });
+    } catch (err) {
+      console.error(`Failed to update positions for ${table}:`, err);
+    }
+  };
+
   const handleDragEnd = (result: DropResult) => {
     const { source, destination, type } = result;
     if (!destination) return;
@@ -113,6 +186,8 @@ export default function SimplePage() {
       const [movedColumn] = newColumns.splice(source.index, 1);
       newColumns.splice(destination.index, 0, movedColumn);
       setColumns(newColumns);
+      const positions = newColumns.map((col, idx) => ({ id: col.id, position: idx }));
+      updatePositions("boardColumn", activeProjectId, positions);
       return;
     }
 
@@ -128,6 +203,8 @@ export default function SimplePage() {
         const newColumns = Array.from(columns);
         newColumns[colIndex] = { ...col, cards: updatedCards };
         setColumns(newColumns);
+        const positions = updatedCards.map((card, idx) => ({ id: card.id, position: idx }));
+        updatePositions("card", col.id, positions);
       } else {
         const sourceColIndex = columns.findIndex(col => col.id === source.droppableId);
         const destColIndex = columns.findIndex(col => col.id === destination.droppableId);
@@ -146,6 +223,8 @@ export default function SimplePage() {
         newColumns[destColIndex] = { ...destCol, cards: destCards };
 
         setColumns(newColumns);
+        updatePositions("card", sourceCol.id, sourceCards.map((card, idx) => ({ id: card.id, position: idx })));
+        updatePositions("card", destCol.id, destCards.map((card, idx) => ({ id: card.id, position: idx })));
       }
       return;
     }
@@ -205,26 +284,48 @@ export default function SimplePage() {
           setSelectedCard({ ...selectedCard, checklist: updatedChecklist });
         }
       }
+      const affectedCardIds = new Set([sourceCardId, destCardId]);
+      affectedCardIds.forEach(cardId => {
+        const checklist = finalColumns
+          .flatMap(col => col.cards)
+          .find(c => c.id === cardId)?.checklist;
+
+        if (checklist) {
+          const positions = checklist.map((item, idx) => ({ id: item.id, position: idx }));
+          updatePositions("checklistItem", cardId, positions);
+        }
+      });
     }
   };
   
   // Toggle checklist item completed
-  const toggleChecklistItem = (cardId: string, index: number) => {
+  const toggleChecklistItem = async (cardId: string, itemId: string) => {
+    let newValue = false;
+
     setColumns((prevCols) =>
       prevCols.map((col) => ({
         ...col,
         cards: col.cards.map((c) => {
           if (c.id !== cardId) return c;
 
-          const updated = [...(c.checklist ?? [])]; // default to empty array
-          if (updated[index]) {
-            updated[index].completed = !updated[index].completed;
-          }
+          const updated = (c.checklist ?? []).map((item) =>
+            item.id === itemId ? { ...item, completed: !item.completed } : item
+          );
+
+          const changedItem = updated.find((item) => item.id === itemId);
+          if (changedItem) newValue = changedItem.completed;
 
           return { ...c, checklist: updated };
         }),
       }))
     );
+
+    // send the updated value to the backend
+    await fetch(`/api/checklistItems/${itemId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed: newValue }),
+    });
   };
 
   const [editingChecklistItem, setEditingChecklistItem] = useState<{
@@ -240,6 +341,7 @@ export default function SimplePage() {
         activeProjectId={activeProjectId}
         setActiveProjectId={setActiveProjectId}
         user={user || null}
+        updatePositions={updatePositions}
       />
       <div className="flex h-[calc(100vh-2rem)] bg-gray-100 overflow-x-auto overflow-y-hidden">
         <FileExplorerSidebar
@@ -287,6 +389,7 @@ export default function SimplePage() {
           addChecklistItem={handlers.addChecklistItem}
           updateCardTitle={handlers.updateCardTitle}
           handleDragEnd={handleDragEnd}
+          deleteChecklistItem={handlers.deleteChecklistItem}
         />
       )}
     </div>

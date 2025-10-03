@@ -13,6 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       select: {
         id: true,
         title: true,
+        position: true,
       },
       orderBy: { position: "asc" },
     });

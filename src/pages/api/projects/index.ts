@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         favicon,
         position: position ?? 0,
         isActive: true,
-        isNew: true,
+        isNew: false,
       },
     });
 

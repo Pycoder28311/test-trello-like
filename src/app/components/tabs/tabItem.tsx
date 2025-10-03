@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction } from "react";
-import { Project, Projects } from "../types/tabsAndTrello";
+import { Project, Projects, User } from "../types/tabsAndTrello";
 import { X } from "lucide-react";
 import { useState } from "react";
 
@@ -14,6 +14,7 @@ interface TabProjectProps {
   handlers: ReturnType<typeof import("./tabHandlers").chromeTabsHandlers>;
   setActiveProjectId: Dispatch<SetStateAction<string>>;
   inputRef?: (el: HTMLInputElement | null) => void;
+  user: User | null;
 }
 
 const TabItem: React.FC<TabProjectProps> = ({
@@ -26,6 +27,7 @@ const TabItem: React.FC<TabProjectProps> = ({
   dragIndex,
   handlers,
   setActiveProjectId,
+  user,
 }) => {
   const isActive = id === activeProjectId;
   const isNew = project.isNew || false;
@@ -83,7 +85,9 @@ const TabItem: React.FC<TabProjectProps> = ({
   return (
     <div
       draggable={!isNew}
-      onClick={() => !isNew && setActiveProjectId(id)}
+      onClick={() => {
+        setActiveProjectId(id); 
+      }}
       className={`
         group flex items-center min-w-[10px] max-w-[240px] h-12 md:h-8
         border border-gray-300 border-b-0 relative

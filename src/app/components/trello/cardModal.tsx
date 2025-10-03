@@ -19,6 +19,7 @@ interface CardModalProps {
   addChecklistItem: (text: string) => void;
   updateCardTitle: (columnId: string, cardId: string, newTitle: string) => void;
   handleDragEnd: (result: DropResult) => void;
+  deleteChecklistItem: (cardId: string, itemId: string) => void;
 }
 
 const CardModal: React.FC<CardModalProps> = ({
@@ -38,10 +39,53 @@ const CardModal: React.FC<CardModalProps> = ({
   addChecklistItem,
   updateCardTitle,
   handleDragEnd,
+  deleteChecklistItem,
 }) => {
   const [newChecklistItem, setNewChecklistItem] = useState("");
 
   if (!selectedCard) return null;
+
+  const handleSave = async () => {
+    if (!selectedCard) return;
+    updateCardTitle(columnId, selectedCard.id, editText);
+    setIsEditing(false);
+    try {
+      await fetch(`/api/cards/${selectedCard.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editText }),
+      });
+    } catch (error) {
+      console.error("Failed to save card title:", error);
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    if (!selectedCard) return;
+
+    // Save to database
+    try {
+      await fetch(`/api/cards/${selectedCard.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: selectedCard.description }),
+      });
+    } catch (error) {
+      console.error("Failed to save description:", error);
+    }
+  };
+
+  const updateChecklistItem = async (itemId: string, data: { text?: string; completed?: boolean }) => {
+    try {
+      await fetch(`/api/checklistItems/${itemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error("Failed to update checklist item:", error);
+    }
+  };
 
   return (
     <div
@@ -62,12 +106,9 @@ const CardModal: React.FC<CardModalProps> = ({
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  // Call the function from parent to update the real card
-                  updateCardTitle(columnId, selectedCard.id, editText);
-                  setIsEditing(false);
-                }
+                if (e.key === "Enter") handleSave();
               }}
+              onBlur={handleSave} // save when losing focus
               className="w-full border rounded p-2"
               autoFocus
             />
@@ -75,11 +116,10 @@ const CardModal: React.FC<CardModalProps> = ({
             <p
               className="text-lg font-semibold cursor-pointer"
               onClick={() => {
-                setEditText(selectedCard.content);
                 setIsEditing(true);
               }}
             >
-              {editText}
+              {editText} {/* always show actual card content */}
             </p>
           )}
         </div>
@@ -92,6 +132,7 @@ const CardModal: React.FC<CardModalProps> = ({
             rows={3}
             value={selectedCard.description || ""}
             onChange={(e) => handleDescriptionChange(e.target.value)}
+            onBlur={handleSaveDescription}
           />
         </div>
 
@@ -116,40 +157,51 @@ const CardModal: React.FC<CardModalProps> = ({
                           <input
                             type="checkbox"
                             checked={item.completed}
-                            onChange={() => toggleChecklistItem(idx)}
+                            onChange={() => {
+                              toggleChecklistItem(idx);
+                              updateChecklistItem(item.id, { completed: !item.completed });
+                            }}
                           />
                           {editingChecklistItem?.cardId === selectedCard.id && editingChecklistItem.index === idx ? (
                             <input
                               type="text"
                               value={item.text}
                               onChange={(e) => {
-                              const newText = e.target.value;
+                                const newText = e.target.value;
 
-                              // Update selectedCard
-                              setSelectedCard((prev) => {
-                                if (!prev) return prev;
-                                const updatedChecklist = [...(prev.checklist ?? [])];
-                                updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
-                                return { ...prev, checklist: updatedChecklist };
-                              });
+                                // Update selectedCard
+                                setSelectedCard((prev) => {
+                                  if (!prev) return prev;
+                                  const updatedChecklist = [...(prev.checklist ?? [])];
+                                  updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
+                                  return { ...prev, checklist: updatedChecklist };
+                                });
 
-                              // Update columns/cards
-                              setColumns((prevColumns) =>
-                                prevColumns.map((col) => ({
-                                  ...col,
-                                  cards: col.cards.map((c) => {
-                                    if (c.id === selectedCard?.id) {
-                                      const updatedChecklist = [...(c.checklist ?? [])];
-                                      updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
-                                      return { ...c, checklist: updatedChecklist };
-                                    }
-                                    return c;
-                                  }),
-                                }))
-                              );
-                            }}
-                              onBlur={() => setEditingChecklistItem(null)}
-                              onKeyDown={(e) => e.key === "Enter" && setEditingChecklistItem(null)}
+                                // Update columns/cards
+                                setColumns((prevColumns) =>
+                                  prevColumns.map((col) => ({
+                                    ...col,
+                                    cards: col.cards.map((c) => {
+                                      if (c.id === selectedCard?.id) {
+                                        const updatedChecklist = [...(c.checklist ?? [])];
+                                        updatedChecklist[idx] = { ...updatedChecklist[idx], text: newText };
+                                        return { ...c, checklist: updatedChecklist };
+                                      }
+                                      return c;
+                                    }),
+                                  }))
+                                );
+                              }}
+                              onBlur={(e) => {
+                                setEditingChecklistItem(null);
+                                updateChecklistItem(item.id, { text: e.target.value });
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  setEditingChecklistItem(null);
+                                  updateChecklistItem(item.id, { text: item.text });
+                                }
+                              }}
                               autoFocus
                               className={`flex-1 border rounded p-1 ${
                                 item.completed ? "line-through text-gray-400" : ""
@@ -163,6 +215,16 @@ const CardModal: React.FC<CardModalProps> = ({
                               {item.text}
                             </span>
                           )}
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent dragging when clicking delete
+                              deleteChecklistItem(selectedCard.id, item.id);
+                            }}
+                            className="text-red-500 hover:text-red-700 font-bold"
+                          >
+                            ×
+                          </button>
                         </div>
                       )}
                     </Draggable>

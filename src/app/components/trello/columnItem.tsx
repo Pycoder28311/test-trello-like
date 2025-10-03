@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Draggable, Droppable, DraggableProvided, DraggableStateSnapshot, DroppableProvided, DroppableStateSnapshot } from "@hello-pangea/dnd";
 import CardItem from "./cardItem";
 import AddCardInput from "./addCardItem";
-import { Column, Card } from "../types/tabsAndTrello"; // adjust your types
+import { Column, Card } from "../types/tabsAndTrello";
 
 interface ColumnItemProps {
   col: Column;
@@ -16,7 +16,7 @@ interface ColumnItemProps {
   addChecklistItemInCard: (card: Card, text: string) => void;
   editingChecklistItem: { cardId: string; index: number } | null;
   setEditingChecklistItem: React.Dispatch<React.SetStateAction<{ cardId: string; index: number } | null>>;
-  toggleChecklistItem: (cardId: string, idx: number) => void;
+  toggleChecklistItem: (cardId: string, idx: string) => void;
   editChecklistItem: (cardId: string, idx: number, newText: string) => void;
   deleteChecklistItem: (cardId: string, idx: string) => void;
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>;
@@ -40,6 +40,13 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
   setColumns,
 }) => {
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const saveColumn = async (id: string, title: string) => {
+    await fetch(`/api/columns/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+  };
 
   return (
     <Draggable key={col.id} draggableId={col.id} index={index}>
@@ -72,8 +79,16 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
                         prev.map(c => (c.id === col.id ? { ...c, title: newTitle } : c))
                       );
                     }}
-                    onBlur={() => setEditingColumn(null)}
-                    onKeyDown={(e) => e.key === "Enter" && setEditingColumn(null)}
+                    onBlur={async (e) => {
+                      setEditingColumn(null);
+                      await saveColumn(col.id, e.target.value); // freshest input value
+                    }}
+                    onKeyDown={async (event) => {
+                      if (event?.key === "Enter") {
+                        setEditingColumn(null);
+                        await saveColumn(col.id, col.title);
+                      }
+                    }}
                     className="border rounded p-1 w-full"
                   />
                 ) : (
