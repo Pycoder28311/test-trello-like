@@ -96,9 +96,17 @@ export default function SimplePage() {
 
   useEffect(() => {
     const fetchActiveProject = async () => {
-      if (!activeProjectId || !projects[activeProjectId] || projects[activeProjectId].isNew) return;
+      if (!activeProjectId) return;
 
       try {
+        const activeProject = projects[activeProjectId];
+
+        // If project is new, just clear columns and skip fetch
+        if (activeProject?.isNew) {
+          setColumns([]);
+          return;
+        }
+        
         const resActive = await fetch(`/api/projects/${activeProjectId}`);
         if (!resActive.ok) throw new Error("Failed to fetch active project");
 
