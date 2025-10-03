@@ -76,6 +76,7 @@ export const chromeTabsHandlers = (props: ChromeTabsHandlersProps) => {
     });
 
     try {
+      console.log(projectId);
       // 1️⃣ Call API to delete project from DB
       const res = await fetch(`/api/projects/${projectId}`, {
         method: "DELETE",
