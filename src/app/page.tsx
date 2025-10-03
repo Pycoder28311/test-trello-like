@@ -29,7 +29,6 @@ export default function SimplePage() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [user, setUser] = useState<User>();
 
-  // Load columns when switching projects
   useEffect(() => {
     if (projects[activeProjectId]) {
       setColumns(projects[activeProjectId].columns);
@@ -39,125 +38,124 @@ export default function SimplePage() {
   }, [activeProjectId]); 
 
   useEffect(() => {
-    const fetchSession = async () => {
+    const init = async () => {
       try {
+        // Fetch session
         const response = await fetch("/api/session");
         if (!response.ok) throw new Error("Failed to fetch session data");
-
         const session = await response.json();
+
         if (session?.user) {
           setUser(session.user);
           if (session.user.lastProjectId) {
             setActiveProjectId(session.user.lastProjectId);
           }
+
+          // Fetch projects for that user
+          const resProjects = await fetch("/api/projects/names");
+          if (!resProjects.ok) throw new Error("Failed to fetch projects");
+
+          const projectsArray: { id: string; title: string; position: number }[] =
+            await resProjects.json();
+
+          const projects: Record<string, Project> = Object.fromEntries(
+            projectsArray.map(p => [
+              p.id,
+              {
+                id: p.id,
+                title: p.title,
+                position: p.position,
+                isActive: false,
+                isNew: false,
+                columns: [],
+                favicon: undefined,
+              } as Project,
+            ])
+          );
+
+          setProjects(projects);
+
+          const initialId =
+            session.user.lastProjectId && projects[session.user.lastProjectId]
+              ? session.user.lastProjectId
+              : projectsArray[0]?.id;
+
+          if (initialId) {
+            setActiveProjectId(initialId);
+
+            // 4️⃣ Fetch active project data + columns immediately
+            const resActive = await fetch(`/api/projects/${initialId}`);
+            if (!resActive.ok) throw new Error("Failed to fetch active project");
+
+            const activeProjectData = await resActive.json();
+            setColumns(activeProjectData.columns || []);
+
+            setProjects(prev => ({
+              ...prev,
+              [activeProjectData.id]: {
+                ...prev[activeProjectData.id],
+                ...activeProjectData,
+                isActive: true,
+              },
+            }));
+          }
         }
-      } catch (error) {
-        console.error("Error fetching session:", error);
+      } catch (err) {
+        console.error("Init failed:", err);
       }
     };
 
-    fetchSession();
+    init();
   }, []);
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        if (!user) return;
-        // 1️⃣ Fetch projects
-        const resProjects = await fetch("/api/projects/names");
-        if (!resProjects.ok) throw new Error("Failed to fetch projects");
-
-        const projectsArray: { id: string; title: string; position: number }[] = await resProjects.json();
-
-        // 2️⃣ Map into full Project type with defaults
-        const projects: Record<string, Project> = Object.fromEntries(
-          projectsArray.map(p => [
-            p.id,
-            {
-              id: p.id,
-              title: p.title,
-              position: p.position,
-              isActive: false,          // default
-              isNew: false,             // default
-              columns: [],              // default empty columns
-              favicon: undefined,       // default
-            } as Project,
-          ])
-        );
-
-        setProjects(projects);
-      } catch (err) {
-        console.error("Failed to load projects and columns:", err);
-      }
-    };
-
-    fetchProjects();
-  }, [user]);
-
-  useEffect(() => {
-    const fetchActiveProject = async () => {
+    const updateActiveProject = async () => {
       if (!activeProjectId || !user) return;
 
       const activeProject = projects[activeProjectId];
       if (!activeProject) {
-        // If it was deleted, just clear columns and stop
         setColumns([]);
         return;
       }
 
       try {
-        const activeProject = projects[activeProjectId];
+        if (!activeProject.isNew) {
+          const resActive = await fetch(`/api/projects/${activeProjectId}`);
+          if (!resActive.ok) throw new Error("Failed to fetch active project");
 
-        // If project is new, just clear columns and skip fetch
-        if (activeProject?.isNew) {
+          const activeProjectData = await resActive.json();
+
+          setColumns(activeProjectData.columns || []);
+          setProjects(prev => ({
+            ...prev,
+            [activeProjectData.id]: {
+              ...prev[activeProjectData.id],
+              ...activeProjectData,
+              isActive: true,
+            },
+          }));
+        } else {
           setColumns([]);
-          return;
         }
-        
-        const resActive = await fetch(`/api/projects/${activeProjectId}`);
-        if (!resActive.ok) throw new Error("Failed to fetch active project");
 
-        const activeProjectData = await resActive.json();
-
-        // Update columns for the active project
-        setColumns(activeProjectData.columns || []);
-
-        // Merge full active project into projects state
-        setProjects(prev => ({
-          ...prev,
-          [activeProjectData.id]: {
-            ...prev[activeProjectData.id],
-            ...activeProjectData,
-            isActive: true, // mark as active
-          },
-        }));
-      } catch (err) {
-        console.error("Failed to load active project:", err);
-      }
-    };
-
-    fetchActiveProject();
-  }, [activeProjectId]); // only when activeProjectId changes
-
-  useEffect(() => {
-    const fetchActiveProjectId = async () => {
-      if (!activeProjectId) return;
-
-      if (user?.id) {
-        try {
+        // Save lastProjectId
+        if (user?.id) {
           await fetch("/api/lastProject", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user.id, lastProjectId: activeProjectId }),
+            body: JSON.stringify({
+              userId: user.id,
+              lastProjectId: activeProjectId,
+            }),
           });
-        } catch (err) {
-          console.error("Failed to update lastProjectId:", err);
         }
+      } catch (err) {
+        console.error("Failed to update active project:", err);
       }
     };
 
-    fetchActiveProjectId();
-  }, [activeProjectId]); // only when activeProjectId changes
+    updateActiveProject();
+  }, [activeProjectId, user]);
 
   const handlers = trelloHandlers({
     columns,
