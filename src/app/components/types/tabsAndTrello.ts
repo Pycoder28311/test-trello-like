@@ -17,7 +17,7 @@ export interface Card {
 
 export interface Column {
   id: string;
-  projectId: string;
+  projectId?: string;
   title: string;
   cards: Card[];
 }
