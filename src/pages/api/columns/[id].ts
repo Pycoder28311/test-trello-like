@@ -13,13 +13,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method === "PUT") {
       // Edit column
-      const { title, position } = req.body;
+      const { title, position, projectId } = req.body;
 
       const updatedColumn = await prisma.boardColumn.update({
         where: { id },
         data: {
           ...(title !== undefined ? { title } : {}),
           ...(position !== undefined ? { position } : {}),
+          ...(projectId !== undefined ? { projectId } : {}),
         },
       });
 

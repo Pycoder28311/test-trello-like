@@ -303,7 +303,6 @@ export default function SimplePage() {
     }
   };
   
-  // Toggle checklist item completed
   const toggleChecklistItem = async (cardId: string, itemId: string) => {
     let newValue = false;
 
@@ -375,6 +374,7 @@ export default function SimplePage() {
             addChecklistItemInCard={handlers.addChecklistItemInCard}
             deleteChecklistItem={handlers.deleteChecklistItem}
             editChecklistItem={handlers.editChecklistItem}
+            projects={projects}
           />
         )}
       </div>

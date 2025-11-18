@@ -17,6 +17,7 @@ export interface Card {
 
 export interface Column {
   id: string;
+  projectId: string;
   title: string;
   cards: Card[];
 }
@@ -71,6 +72,7 @@ export interface TrelloBoardsProps {
   addChecklistItemInCard: (card: Card, text: string) => void;
   deleteChecklistItem: (cardId: string, index: string) => void;
   editChecklistItem: (cardId: string, index: number, newText: string) => void;
+  projects: Projects;
 }
 
 export interface TrelloHandlersProps {

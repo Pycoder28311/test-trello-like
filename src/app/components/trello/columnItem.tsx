@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Draggable, Droppable, DraggableProvided, DraggableStateSnapshot, DroppableProvided, DroppableStateSnapshot } from "@hello-pangea/dnd";
 import CardItem from "./cardItem";
 import AddCardInput from "./addCardItem";
-import { Column, Card } from "../types/tabsAndTrello";
+import { Column, Card, Projects } from "../types/tabsAndTrello";
 
 interface ColumnItemProps {
   col: Column;
@@ -20,6 +20,7 @@ interface ColumnItemProps {
   editChecklistItem: (cardId: string, idx: number, newText: string) => void;
   deleteChecklistItem: (cardId: string, idx: string) => void;
   setColumns: React.Dispatch<React.SetStateAction<Column[]>>;
+  projects: Projects,
 }
 
 const ColumnItem: React.FC<ColumnItemProps> = ({
@@ -38,14 +39,30 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
   editChecklistItem,
   deleteChecklistItem,
   setColumns,
+  projects,
 }) => {
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
-  const saveColumn = async (id: string, title: string) => {
-    await fetch(`/api/columns/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
+  const saveColumn = async (
+    id: string,
+    data: { title?: string; position?: number; projectId?: string }
+  ) => {
+    try {
+      const res = await fetch(`/api/columns/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || "Failed to save column");
+      }
+
+      return res.json(); // optional: return updated column
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   };
 
   return (
@@ -81,12 +98,12 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
                     }}
                     onBlur={async (e) => {
                       setEditingColumn(null);
-                      await saveColumn(col.id, e.target.value); // freshest input value
+                      await saveColumn(col.id, { title: e.target.value }); // freshest input value
                     }}
                     onKeyDown={async (event) => {
                       if (event?.key === "Enter") {
                         setEditingColumn(null);
-                        await saveColumn(col.id, col.title);
+                        await saveColumn(col.id, { title: col.title });
                       }
                     }}
                     className="border rounded p-1 w-full"
@@ -96,6 +113,30 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
                     {col.title}
                   </span>
                 )}
+                <select
+                  autoFocus
+                  value={col.projectId || ""}
+                  onChange={async (e) => {
+                    const selectedProjectId = e.target.value;
+                    // Update column locally
+                    setColumns((prev) =>
+                      prev.map((c) =>
+                        c.id === col.id ? { ...c, projectId: selectedProjectId } : c
+                      )
+                    );
+                    // Save to DB
+                    await saveColumn(col.id, { projectId: selectedProjectId });
+                  }}
+                  onBlur={() => setEditingColumn(null)}
+                  className="border rounded p-1 w-full hidden"
+                >
+                  <option value="">Select project</option>
+                  {Object.values(projects).map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button

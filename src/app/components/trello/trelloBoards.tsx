@@ -25,6 +25,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
   addChecklistItemInCard,
   deleteChecklistItem,
   editChecklistItem,
+  projects,
 }) => {
   const [isDraggingItem, setIsDraggingItem] = useState(false);
   const [openChecklists, setOpenChecklists] = useState<{ [cardId: string]: boolean }>({});
@@ -97,6 +98,7 @@ const TrelloBoards: React.FC<TrelloBoardsProps> = ({
                   editChecklistItem={editChecklistItem}
                   deleteChecklistItem={deleteChecklistItem}
                   setColumns={setColumns}
+                  projects={projects}
                 />
               ))}
               {provided.placeholder}

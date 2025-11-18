@@ -24,13 +24,6 @@ export default async function HomePage() {
             <button>Εγγραφή</button>
           </Link>
         </div>
-
-        <div>
-          {/* Link στη σελίδα σφάλματος */}
-          <Link href="/auth/error">
-            <button>Σελίδα Σφάλματος</button>
-          </Link>
-        </div>
       </div>
     );
   }
