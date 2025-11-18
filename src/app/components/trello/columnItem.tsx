@@ -42,6 +42,9 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
   projects,
 }) => {
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(col.projectId || "");
+
   const saveColumn = async (
     id: string,
     data: { title?: string; position?: number; projectId?: string }
@@ -113,30 +116,21 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
                     {col.title}
                   </span>
                 )}
-                <select
-                  autoFocus
-                  value={col.projectId || ""}
-                  onChange={async (e) => {
-                    const selectedProjectId = e.target.value;
-                    // Update column locally
-                    setColumns((prev) =>
-                      prev.map((c) =>
-                        c.id === col.id ? { ...c, projectId: selectedProjectId } : c
-                      )
-                    );
-                    // Save to DB
-                    await saveColumn(col.id, { projectId: selectedProjectId });
-                  }}
-                  onBlur={() => setEditingColumn(null)}
-                  className="border rounded p-1 w-full hidden"
+                <button
+                  onClick={() => setIsProjectModalOpen(true)}
+                  className=" p-1 text-left"
                 >
-                  <option value="">Select project</option>
-                  {Object.values(projects).map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </select>
+                  {/* Icon */}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
 
               <button
@@ -188,6 +182,37 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
             {/* Add new card */}
             <AddCardInput colId={col.id} addCard={addCard} />
           </div>
+          {isProjectModalOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setIsProjectModalOpen(false)}>
+              <div className="bg-white rounded-lg p-4 w-80 max-h-[400px] overflow-y-auto" onClick={(e) => e.stopPropagation()}  >
+                <h2 className="font-bold mb-2">Select a Project</h2>
+                {Object.values(projects).map((project) => (
+                  <div
+                    key={project.id}
+                    className={`p-2 rounded cursor-pointer hover:bg-gray-200 ${
+                      project.id === selectedProjectId ? "bg-gray-300" : ""
+                    }`}
+                    onClick={async () => {
+                      setSelectedProjectId(project.id);
+                      await saveColumn(col.id, { projectId: project.id });
+
+                      setColumns((prev) => prev.filter((c) => c.id !== col.id));
+
+                      setIsProjectModalOpen(false);
+                    }}
+                  >
+                    {project.title}
+                  </div>
+                ))}
+                <button
+                  onClick={() => setIsProjectModalOpen(false)}
+                  className="mt-2 px-4 py-1 bg-gray-200 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Draggable>

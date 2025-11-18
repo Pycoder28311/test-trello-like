@@ -14,13 +14,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === "PUT") {
       // Edit column
       const { title, position, projectId } = req.body;
+      let newPositionData = {};
+
+      if (projectId !== undefined) {
+        // Get the highest position in the new project
+        const lastColumn = await prisma.boardColumn.findFirst({
+          where: { projectId },
+          orderBy: { position: "desc" },
+        });
+
+        const nextPosition = lastColumn ? lastColumn.position + 1 : 0;
+
+        newPositionData = {
+          projectId,
+          position: nextPosition,
+        };
+      }
 
       const updatedColumn = await prisma.boardColumn.update({
         where: { id },
         data: {
           ...(title !== undefined ? { title } : {}),
           ...(position !== undefined ? { position } : {}),
-          ...(projectId !== undefined ? { projectId } : {}),
+          ...newPositionData,
         },
       });
 

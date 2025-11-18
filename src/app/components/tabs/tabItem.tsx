@@ -14,7 +14,6 @@ interface TabProjectProps {
   handlers: ReturnType<typeof import("./tabHandlers").chromeTabsHandlers>;
   setActiveProjectId: Dispatch<SetStateAction<string>>;
   inputRef?: (el: HTMLInputElement | null) => void;
-  user: User | null;
 }
 
 const TabItem: React.FC<TabProjectProps> = ({
@@ -27,7 +26,6 @@ const TabItem: React.FC<TabProjectProps> = ({
   dragIndex,
   handlers,
   setActiveProjectId,
-  user,
 }) => {
   const isActive = id === activeProjectId;
   const isNew = project.isNew || false;

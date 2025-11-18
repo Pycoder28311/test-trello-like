@@ -136,7 +136,6 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                             dragIndex={null}
                             handlers={handlers}
                             setActiveProjectId={setActiveProjectId}
-                            user={user}
                           />
                         </div>
                       )}
@@ -220,7 +219,6 @@ const ChromeTabs: React.FC<ChromeTabsProps> = ({
                             dragIndex={null}
                             handlers={handlers}
                             setActiveProjectId={setActiveProjectId}
-                            user={user}
                           />
                         </div>
                       )}
