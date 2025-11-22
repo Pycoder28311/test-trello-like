@@ -113,7 +113,8 @@ const ColumnItem: React.FC<ColumnItemProps> = ({
                   />
                 ) : (
                   <span className="cursor-pointer" onClick={() => setEditingColumn(col.id)}>
-                    {col.title}
+                    {col.title} 
+                    <span className="text-red-600 ml-2">{col.cards.length}</span>
                   </span>
                 )}
                 <button
