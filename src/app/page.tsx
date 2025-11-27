@@ -34,26 +34,25 @@ export default function SimplePage() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [user, setUser] = useState<User>();
 
-  const [columnNames, setColumnNames] = useState<ColumnCards[]>([]);
   const projectId = "project1761929363642";
 
-  useEffect(() => {
-    if (!projectId) return;
+  const [isOpen, setIsOpen] = useState(true); // αρχικά ανοικτό
 
-    async function fetchCards() {
-      try {
-        const res = await fetch(`/api/businessesNames?projectId=${projectId}`);
-        if (!res.ok) throw new Error('Failed to fetch cards');
+  const toggleDiv = () => {
+    setIsOpen(!isOpen);
+  };
 
-        const data: ColumnCards[] = await res.json();
-        setColumnNames(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+  const copyAllCards = () => {
+    // Συγκεντρώνουμε όλα τα card.content σε ένα string, διαχωρισμένα με νέα γραμμή
+    const allContent = columns
+      .flatMap(col => col.cards || [])
+      .map(card => card.content)
+      .join("\n");
 
-    fetchCards();
-  }, [projectId]);
+    // Αντιγραφή στο clipboard
+    navigator.clipboard.writeText(allContent)
+      .catch(err => console.error("Failed to copy text: ", err));
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -382,18 +381,6 @@ export default function SimplePage() {
           onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
-        <div>
-          {columnNames.map((col, idx) => (
-            <div key={idx}>
-              <h3>{col.title}</h3>
-              <ul>
-                {col.cards && col.cards.map((card, cidx) => (
-                  <li key={cidx}>{card}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
         {user && (
           <TrelloBoards
             columns={columns}
@@ -414,6 +401,36 @@ export default function SimplePage() {
             editChecklistItem={handlers.editChecklistItem}
             projects={projects}
           />
+        )}
+        {activeProjectId === projectId && (
+          <div>
+            <button
+              onClick={toggleDiv}
+              className="fixed right-0 mb-2 px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              {isOpen ? "Hide" : "Show"}
+            </button>
+
+            <button
+              onClick={copyAllCards}
+              className="fixed right-0 bottom-4 px-4 py-2 bg-green-500 text-white rounded"
+            >
+              Copy
+            </button>
+
+            {isOpen && (
+              <div className="overflow-y-auto mt-12 px-4 max-h-[90%]">
+                {columns.map((col, idx) => (
+                  <div key={idx}>
+                    <ul>
+                      {col.cards &&
+                        col.cards.map((card, cidx) => <li key={cidx}>{card.content}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
       {selectedCard && (
