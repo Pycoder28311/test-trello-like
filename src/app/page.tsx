@@ -382,7 +382,7 @@ export default function SimplePage() {
           onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
-        <div className="hidden">
+        <div>
           {columnNames.map((col, idx) => (
             <div key={idx}>
               <h3>{col.title}</h3>
