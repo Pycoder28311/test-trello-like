@@ -11,6 +11,11 @@ import { trelloHandlers } from "./components/trello/trelloHandlers";
 import { DropResult } from "@hello-pangea/dnd";
 import CardModal from './components/trello/cardModal';
 
+interface ColumnCards {
+  title: string;
+  cards: string[];
+}
+
 export default function SimplePage() {
 
   const [newColumnTitle, setNewColumnTitle] = useState("");
@@ -28,6 +33,27 @@ export default function SimplePage() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
   const [user, setUser] = useState<User>();
+
+  const [columnNames, setColumnNames] = useState<ColumnCards[]>([]);
+  const projectId = "project1761929363642";
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    async function fetchCards() {
+      try {
+        const res = await fetch(`/api/businessesNames?projectId=${projectId}`);
+        if (!res.ok) throw new Error('Failed to fetch cards');
+
+        const data: ColumnCards[] = await res.json();
+        setColumnNames(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchCards();
+  }, [projectId]);
 
   useEffect(() => {
     const init = async () => {
@@ -279,16 +305,16 @@ export default function SimplePage() {
 
       setColumns(finalColumns);
 
-      if (selectedCard) 
-      if (selectedCard.id === destCardId) {
-        const updatedChecklist = finalColumns
-          .find(col => col.cards.some(c => c.id === selectedCard.id))
-          ?.cards.find(c => c.id === selectedCard.id)?.checklist;
+      if (selectedCard)
+        if (selectedCard.id === destCardId) {
+          const updatedChecklist = finalColumns
+            .find(col => col.cards.some(c => c.id === selectedCard.id))
+            ?.cards.find(c => c.id === selectedCard.id)?.checklist;
 
-        if (updatedChecklist) {
-          setSelectedCard({ ...selectedCard, checklist: updatedChecklist });
+          if (updatedChecklist) {
+            setSelectedCard({ ...selectedCard, checklist: updatedChecklist });
+          }
         }
-      }
       const affectedCardIds = new Set([sourceCardId, destCardId]);
       affectedCardIds.forEach(cardId => {
         const checklist = finalColumns
@@ -302,7 +328,7 @@ export default function SimplePage() {
       });
     }
   };
-  
+
   const toggleChecklistItem = async (cardId: string, itemId: string) => {
     let newValue = false;
 
@@ -356,6 +382,18 @@ export default function SimplePage() {
           onCardClick={handlers.openCardModal}
           handleDragEnd={handleDragEnd}
         />
+        <div className="hidden">
+          {columnNames.map((col, idx) => (
+            <div key={idx}>
+              <h3>{col.title}</h3>
+              <ul>
+                {col.cards && col.cards.map((card, cidx) => (
+                  <li key={cidx}>{card}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
         {user && (
           <TrelloBoards
             columns={columns}
